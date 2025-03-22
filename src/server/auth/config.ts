@@ -1,14 +1,10 @@
-import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
-import DiscordProvider from "next-auth/providers/discord";
+import Credentials from "next-auth/providers/credentials";
 
 import { db } from "@/server/db";
-import {
-  accounts,
-  sessions,
-  users,
-  verificationTokens,
-} from "@/server/db/schema";
+import { users } from "@/server/db/schema";
+import { and, eq } from "drizzle-orm";
+import { object, string, ZodError } from "zod";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -31,6 +27,15 @@ declare module "next-auth" {
   // }
 }
 
+const signInSchema = object({
+  username: string({ required_error: "Username is required" })
+    .min(3, "Username must be at least 3 characters")
+    .max(255),
+  password: string({ required_error: "Password is required" })
+    .min(8, "Password must be at least 8 characters")
+    .max(255),
+});
+
 /**
  * Options for NextAuth.js used to configure adapters, providers, callbacks, etc.
  *
@@ -38,7 +43,39 @@ declare module "next-auth" {
  */
 export const authConfig = {
   providers: [
-    DiscordProvider,
+    Credentials({
+      credentials: {
+        username: {},
+        password: {},
+      },
+      authorize: async (credentials) => {
+        try {
+          const { username, password } =
+            await signInSchema.parseAsync(credentials);
+
+          const res = await db
+            .select()
+            .from(users)
+            .where(
+              and(eq(users.password, password), eq(users.username, username)),
+            );
+
+          const user = res[0];
+
+          if (!user) {
+            return null;
+          }
+
+          return user;
+        } catch (error) {
+          if (error instanceof ZodError) {
+            console.error(error.errors);
+          }
+
+          return null;
+        }
+      },
+    }),
     /**
      * ...add more providers here.
      *
@@ -49,12 +86,6 @@ export const authConfig = {
      * @see https://next-auth.js.org/providers/github
      */
   ],
-  adapter: DrizzleAdapter(db, {
-    usersTable: users,
-    accountsTable: accounts,
-    sessionsTable: sessions,
-    verificationTokensTable: verificationTokens,
-  }),
   callbacks: {
     session: ({ session, user }) => ({
       ...session,
