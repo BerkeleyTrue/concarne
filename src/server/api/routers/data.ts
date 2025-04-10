@@ -20,7 +20,7 @@ export const dataRouter = createTRPCRouter({
       await ctx.db.insert(data).values({
         weight: input.weight,
         date: input.date,
-        userId: ctx.session.user.id,
+        userId: "1",
       });
     }),
 
