@@ -17,16 +17,16 @@ export default function Home() {
             ConCarne
           </h1>
 
-          {/* User Information Card */}
-          <UserInfoCard />
+          <div className="flex flex-col items-center gap-2 w-full">
+            <WeightChart />
+          </div>
 
           <div className="flex flex-col items-center gap-2">
             <WeightForm />
           </div>
 
-          <div className="flex flex-col items-center gap-2">
-            <WeightChart />
-          </div>
+          {/* User Information Card */}
+          <UserInfoCard />
         </div>
       </main>
     </>

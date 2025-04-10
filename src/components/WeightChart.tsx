@@ -68,13 +68,13 @@ export function WeightChart() {
 
   if (isLoading) {
     return (
-      <div className="h-64 w-full animate-pulse rounded-lg bg-white/5"></div>
+      <div className="h-80 w-full animate-pulse rounded-lg bg-white/5"></div>
     );
   }
 
   if (chartData.length === 0) {
     return (
-      <div className="flex h-64 w-full items-center justify-center rounded-lg border border-white/20 bg-white/5 p-6 text-white">
+      <div className="flex h-80 w-full items-center justify-center rounded-lg border border-white/20 bg-white/5 p-6 text-white">
         <p>No weight data available. Add your weight to see the chart.</p>
       </div>
     );
@@ -83,11 +83,11 @@ export function WeightChart() {
   return (
     <div className="w-full rounded-lg border border-white/20 bg-white/5 p-6 text-white">
       <h2 className="mb-4 text-2xl font-bold">Weight History</h2>
-      <div className="h-64">
+      <div className="min-h-80 h-full">
         <ChartContainer config={chartConfig}>
           <LineChart
             data={chartData}
-            margin={{ top: 5, right: 20, bottom: 20, left: 20 }}
+            margin={{ top: 20, right: 30, bottom: 30, left: 30 }}
           >
             <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
             <XAxis
@@ -99,6 +99,7 @@ export function WeightChart() {
               domain={[minWeight, maxWeight]}
               tick={{ fill: "#9ca3af" }}
               tickFormatter={(value) => `${value} lbs`}
+              padding={{ top: 20, bottom: 20 }}
             />
             <ChartTooltip
               content={({ active, payload }) => {
