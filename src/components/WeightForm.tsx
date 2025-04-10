@@ -17,8 +17,12 @@ export function WeightForm() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const utils = api.useUtils();
+
   const addWeightMutation = api.data.create.useMutation({
     onSuccess: () => {
+      // Invalidate the getAll query to refresh the chart data
+      void utils.data.getAll.invalidate();
       toast.success("Weight recorded successfully!");
       setWeight("");
       setIsSubmitting(false);

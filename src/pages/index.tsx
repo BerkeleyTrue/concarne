@@ -1,6 +1,7 @@
 import Head from "next/head";
 import { WeightForm } from "@/components/WeightForm";
 import { UserInfoCard } from "@/components/UserInfoCard";
+import { WeightChart } from "@/components/WeightChart";
 
 export default function Home() {
   return (
@@ -21,6 +22,10 @@ export default function Home() {
 
           <div className="flex flex-col items-center gap-2">
             <WeightForm />
+          </div>
+
+          <div className="flex flex-col items-center gap-2">
+            <WeightChart />
           </div>
         </div>
       </main>
