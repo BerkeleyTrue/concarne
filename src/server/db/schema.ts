@@ -17,6 +17,7 @@ export const users = createTable("user", (d) => ({
     .$defaultFn(() => crypto.randomUUID()),
   username: d.text({ length: 255 }),
   password: d.text({ length: 255 }),
+  height: d.integer()
 }));
 
 export const usersRelations = relations(users, (s) => ({
