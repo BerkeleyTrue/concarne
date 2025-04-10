@@ -5,6 +5,7 @@ import {
   ChartTooltipContent,
   ChartLegend,
   ChartLegendContent,
+  type ChartConfig,
 } from "@/components/ui/chart";
 import {
   Line,
@@ -64,7 +65,7 @@ export function WeightChart() {
       label: "Weight",
       color: "#8884d8",
     },
-  };
+  } satisfies ChartConfig;
 
   if (isLoading) {
     return (
@@ -83,11 +84,12 @@ export function WeightChart() {
   return (
     <div className="w-full rounded-lg border border-white/20 bg-white/5 p-6 text-white">
       <h2 className="mb-4 text-2xl font-bold">Weight History</h2>
-      <div className="min-h-80 h-full">
+      <div className="h-full min-h-80 overflow-x-auto overflow-y-auto">
         <ChartContainer config={chartConfig}>
           <LineChart
             data={chartData}
             margin={{ top: 20, right: 30, bottom: 30, left: 30 }}
+            height={500}
           >
             <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
             <XAxis
@@ -96,7 +98,16 @@ export function WeightChart() {
               tick={{ fill: "#9ca3af" }}
             />
             <YAxis
-              domain={[minWeight, maxWeight]}
+              domain={[
+                Math.min(
+                  minWeight,
+                  bmi30Weight > 0 ? bmi30Weight - 20 : minWeight,
+                ),
+                Math.max(
+                  maxWeight,
+                  bmi35Weight > 0 ? bmi35Weight + 20 : maxWeight,
+                ),
+              ]}
               tick={{ fill: "#9ca3af" }}
               tickFormatter={(value) => `${value} lbs`}
               padding={{ top: 20, bottom: 20 }}
@@ -135,7 +146,7 @@ export function WeightChart() {
                 stroke="#ff9800"
                 strokeDasharray="3 3"
                 label={{
-                  value: `BMI 30 (${bmi30Weight} lbs)`,
+                  value: `BMI 30 (${bmi30Weight} lbs) Class 1`,
                   position: "insideBottomRight",
                   fill: "#ff9800",
                 }}
@@ -147,7 +158,7 @@ export function WeightChart() {
                 stroke="#f44336"
                 strokeDasharray="3 3"
                 label={{
-                  value: `BMI 35 (${bmi35Weight} lbs)`,
+                  value: `BMI 35 (${bmi35Weight} lbs) Class 2`,
                   position: "insideBottomRight",
                   fill: "#f44336",
                 }}
