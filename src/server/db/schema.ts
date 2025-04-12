@@ -49,3 +49,32 @@ export const dataRelations = relations(data, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+export const fasts = createTable(
+  "fasts",
+  (d) => ({
+    id: d
+      .text({ length: 255 })
+      .notNull()
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: d
+      .text({ length: 255 })
+      .notNull()
+      .references(() => users.id),
+    startTime: d.integer().notNull(), // Start time in milliseconds since epoch
+    endTime: d.integer(), // End time in milliseconds since epoch (null if fast is ongoing)
+    targetHours: d.integer().notNull(), // Target duration in hours (e.g., 16 for 16:8)
+    fastType: d.text({ length: 255 }).notNull(), // Type of fast (e.g., "16:8 INTERMITTENT")
+    isCompleted: d.integer().default(0), // 0 for ongoing, 1 for completed
+    createdAt: d.integer().notNull().$defaultFn(() => Date.now()) // When the fast record was created
+  }),
+  (t) => [index("fasts_userid_idx").on(t.userId)]
+)
+
+export const fastsRelations = relations(fasts, ({ one }) => ({
+  user: one(users, {
+    fields: [fasts.userId],
+    references: [users.id],
+  }),
+}));
