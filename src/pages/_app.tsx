@@ -1,12 +1,13 @@
 import { type AppType } from "next/app";
-import { Geist } from "next/font/google";
+import { Fira_Mono } from "next/font/google";
 
 import { api } from "@/utils/api";
 
 import "@/styles/globals.css";
 import { Toaster } from "@/components/ui/sonner";
 
-const geist = Geist({
+const font = Fira_Mono({
+  weight: ["400", "500", "700"],
   subsets: ["latin"],
 });
 
@@ -16,7 +17,7 @@ const MyApp: AppType = ({
 }) => {
   return (
     <>
-      <div className={geist.className}>
+      <div className={font.className}>
         <Component {...pageProps} />
       </div>
       <Toaster />
