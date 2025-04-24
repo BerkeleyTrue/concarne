@@ -1,6 +1,7 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { api } from "@/utils/api";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,6 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Pencil } from "lucide-react";
+import { api } from "@/lib/trpc/client";
 
 export function HeightForm({
   userId,

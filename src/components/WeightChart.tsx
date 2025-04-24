@@ -1,4 +1,4 @@
-import { api } from "@/utils/api";
+"use client";
 import {
   ChartContainer,
   ChartTooltip,
@@ -17,6 +17,7 @@ import {
 } from "recharts";
 import { format } from "date-fns";
 import { Card, CardContent, CardTitle } from "./ui/card";
+import { api } from "@/lib/trpc/client";
 
 type Payload = {
   date: Date;
@@ -33,7 +34,7 @@ export function WeightChart() {
   });
 
   // Sort data by date (oldest to newest)
-  const sortedData = [...data].sort((a, b) => a.date - b.date);
+  const sortedData = [...data].sort((a, b) => +a.date - +b.date);
 
   // Format data for the chart
   const chartData = sortedData.map((entry) => ({

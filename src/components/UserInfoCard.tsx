@@ -1,6 +1,7 @@
-import { api } from "@/utils/api";
+"use client";
 import { HeightForm } from "@/components/HeightForm";
 import { Card, CardContent, CardHeader } from "./ui/card";
+import { api } from "@/lib/trpc/client";
 
 export function UserInfoCard() {
   const { data: userData, isLoading: isUserLoading } =

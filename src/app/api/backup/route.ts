@@ -1,55 +1,46 @@
-import type { NextApiRequest, NextApiResponse } from "next";
+import { type NextRequest, NextResponse } from "next/server";
 import { parse } from "fast-csv";
 import { Readable } from "stream";
 
 type DateWeightRaw = {
   dateTime: string;
   weight: string;
-}
+};
 type DateWeight = {
   dateTime: Date;
   weight: number;
-}
-
-// Configure bodyParser to handle JSON data
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: "10mb",
-    },
-  },
 };
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse,
-) {
-  if (req.method !== "POST") {
-    return res
-      .status(405)
-      .json({ success: false, error: "Method not allowed" });
-  }
+// In App Router, the config for body size is handled differently
+export const dynamic = "force-dynamic";
+export const maxDuration = 60; // Set max duration to 60 seconds
 
+export async function POST(request: NextRequest) {
   try {
     // Get the file data from the request body
-    const { file, filename } = req.body as { file: string; filename: string };
+    const { file, filename } = (await request.json()) as {
+      file: string;
+      filename: string;
+    };
 
     if (!file) {
-      return res
-        .status(400)
-        .json({ success: false, error: "No file provided" });
+      return NextResponse.json(
+        { success: false, error: "No file provided" },
+        { status: 400 },
+      );
     }
 
     // Check if it's a CSV file
     if (!filename?.endsWith(".csv")) {
-      return res
-        .status(400)
-        .json({ success: false, error: "Please upload a CSV file" });
+      return NextResponse.json(
+        { success: false, error: "Please upload a CSV file" },
+        { status: 400 },
+      );
     }
 
     // Decode base64 data
     const base64Data = file.split(",")[1];
-    const fileData = Buffer.from(base64Data ??"", "base64");
+    const fileData = Buffer.from(base64Data ?? "", "base64");
 
     // Log file data for testing purposes
     console.log("File received:", {
@@ -65,7 +56,7 @@ export default async function handler(
     // Create a readable stream from the file data
     const fileStream = Readable.from(fileData);
 
-    return new Promise<void>((resolve) => {
+    return new Promise<NextResponse>((resolve) => {
       const stream = parse<DateWeightRaw, DateWeight>({ headers: true })
         .transform((row: DateWeightRaw) => {
           // Transform the row data if needed
@@ -76,8 +67,12 @@ export default async function handler(
         })
         .on("error", (error) => {
           console.error("CSV parsing error:", error);
-          res.status(500).json({ success: false, error: error.message });
-          resolve();
+          resolve(
+            NextResponse.json(
+              { success: false, error: error.message },
+              { status: 500 },
+            ),
+          );
         })
         .on("data", (row: DateWeight) => {
           rows.push(row);
@@ -86,8 +81,9 @@ export default async function handler(
         .on("end", () => {
           // Store the parsed data
           console.log(`Parsed ${rowCount} rows from CSV: `, rows);
-          res.status(200).json({ success: true, rowCount });
-          resolve();
+          resolve(
+            NextResponse.json({ success: true, rowCount }, { status: 200 }),
+          );
         });
 
       // Pipe the data to the parser
@@ -95,10 +91,13 @@ export default async function handler(
     });
   } catch (error) {
     console.error("Error parsing CSV:", error);
-    res.status(500).json({
-      success: false,
-      error:
-        error instanceof Error ? error.message : "An unknown error occurred",
-    });
+    return NextResponse.json(
+      {
+        success: false,
+        error:
+          error instanceof Error ? error.message : "An unknown error occurred",
+      },
+      { status: 500 },
+    );
   }
 }

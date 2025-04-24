@@ -1,7 +1,7 @@
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { WeightChart } from "@/components/WeightChart";
 import { WeightForm } from "@/components/WeightForm";
-import Link from "next/link";
 
 export default function WeightPage() {
   return (

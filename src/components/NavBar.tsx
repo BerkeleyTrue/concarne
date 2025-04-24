@@ -3,11 +3,11 @@
 import { Clock, BarChart2, Ruler, Home } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { useRouter } from "next/router";
 import { useCallback } from "react";
+import { usePathname } from "next/navigation";
 
 export const NavBar = () => {
-  const router = useRouter();
+  const path = usePathname();
 
   const navItems = [
     { label: "Home", icon: Home, route: "/" },
@@ -19,14 +19,14 @@ export const NavBar = () => {
   const isActive = useCallback(
     (route: string) => {
       // Exact match for home page
-      if (route === "/" && router.pathname === "/") {
+      if (route === "/" && path === "/") {
         return true;
       }
       // For other routes, check if the current path starts with the route
       // This handles nested routes like /weight/add still highlighting the Weight nav item
-      return route !== "/" && router.pathname.startsWith(route);
+      return route !== "/" && path.startsWith(route);
     },
-    [router.pathname],
+    [path],
   );
 
   return (

@@ -1,6 +1,6 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { api } from "@/utils/api";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import {
@@ -10,6 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { api } from "@/lib/trpc/client";
 
 export function WeightForm() {
   const [isOpen, setIsOpen] = useState(false);

@@ -8,7 +8,6 @@
  */
 
 import { initTRPC } from "@trpc/server";
-import { type CreateNextContextOptions } from "@trpc/server/adapters/next";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
@@ -36,9 +35,10 @@ import { db } from "@/server/db";
  *
  * @see https://create.t3.gg/en/usage/trpc#-serverapitrpcts
  */
-const createInnerTRPCContext = () => {
+const createInnerTRPCContext = (opts: { headers: Headers }) => {
   return {
     db,
+    ...opts,
   };
 };
 
@@ -48,8 +48,8 @@ const createInnerTRPCContext = () => {
  *
  * @see https://trpc.io/docs/context
  */
-export const createTRPCContext = async (_opts: CreateNextContextOptions) => {
-  return createInnerTRPCContext();
+export const createTRPCContext = async (opts: { headers: Headers }) => {
+  return createInnerTRPCContext(opts);
 };
 
 /**
