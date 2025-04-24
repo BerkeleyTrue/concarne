@@ -5,14 +5,15 @@ import { Upload, FileUp, AlertCircle, Check, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/router";
 import { Card, CardContent, CardFooter, CardTitle } from "./ui/card";
+import { useRouter } from "next/navigation";
 
 export const ImportExport = () => {
-  const [isDragging, setIsDragging] = useState(false);
   const router = useRouter();
+  const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [isUploaded, setIsUploaded] = useState(false);
+  const [rowCount, setRowCount] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -100,6 +101,7 @@ export const ImportExport = () => {
 
             if (data.success) {
               setIsUploaded(true);
+              setRowCount(data.rowCount ?? 0);
               console.log(`Uploaded ${data.rowCount} rows successfully`);
             } else {
               setError(data.error ?? "Failed to upload file");
@@ -192,85 +194,20 @@ export const ImportExport = () => {
         {isUploaded && (
           <div className="flex items-center rounded-md bg-green-100 p-3 text-green-800">
             <Check className="mr-2 h-5 w-5" />
-            <span>File uploaded successfully! (Mock upload)</span>
+            <span>File uploaded successfully! ({rowCount})</span>
           </div>
         )}
 
         {/* Mock Data Preview */}
         {isUploaded && (
           <div className="mt-6 mb-4">
-            <h3 className="mb-3 text-xl font-semibold">Preview (Mock Data)</h3>
-            <div className="overflow-x-auto">
-              <table className="border-input min-w-full rounded-md border">
-                <thead className="bg-accent">
-                  <tr>
-                    <th className="border-input border-b px-4 py-2 text-left">
-                      Date
-                    </th>
-                    <th className="border-input border-b px-4 py-2 text-left">
-                      Weight (kg)
-                    </th>
-                    <th className="border-input border-b px-4 py-2 text-left">
-                      Notes
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    { date: "2023-01-01", weight: "75.5", notes: "New Year" },
-                    {
-                      date: "2023-01-08",
-                      weight: "74.8",
-                      notes: "After holiday",
-                    },
-                    {
-                      date: "2023-01-15",
-                      weight: "74.2",
-                      notes: "Morning weight",
-                    },
-                    { date: "2023-01-22", weight: "73.9", notes: "" },
-                    {
-                      date: "2023-01-29",
-                      weight: "73.5",
-                      notes: "Post workout",
-                    },
-                  ].map((row, index) => (
-                    <tr key={index}>
-                      <td className="border-input border-b px-4 py-2">
-                        {row.date}
-                      </td>
-                      <td className="border-input border-b px-4 py-2">
-                        {row.weight}
-                      </td>
-                      <td className="border-input border-b px-4 py-2">
-                        {row.notes}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p className="text-muted-foreground mt-2 text-sm">
-              Showing 5 of 5 rows (mock data)
-            </p>
+            <p className="text-muted-foreground mt-2 text-sm"></p>
           </div>
         )}
       </CardContent>
       <CardFooter>
         {/* Export Button */}
         <div className="mb-4 flex w-full justify-between">
-          {isUploaded && (
-            <Button
-              variant="outline"
-              onClick={() => {
-                // This would be implemented to handle the import action
-                console.log("Import data");
-              }}
-            >
-              Import Data
-            </Button>
-          )}
-
           <Button
             variant="secondary"
             onClick={() => {

@@ -40,7 +40,10 @@ export const data = createTable(
     // Date as ISO string (e.g., "2023-04-24T12:00:00.000Z")
     date: d.text().notNull(),
   }),
-  (t) => [index("data_userid_idx").on(t.userId)],
+  (t) => [
+    index("data_userid_idx").on(t.userId),
+    index("data_userid_date_unique_idx").on(t.userId, t.date),
+  ],
 );
 
 export const dataRelations = relations(data, ({ one }) => ({

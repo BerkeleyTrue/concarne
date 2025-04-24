@@ -1,19 +1,22 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { parse } from "fast-csv";
 import { Readable } from "stream";
+import { db } from "@/server/db";
+import { eq } from "drizzle-orm";
+import { data } from "@/server/db/schema";
 
 type DateWeightRaw = {
   dateTime: string;
   weight: string;
 };
 type DateWeight = {
-  dateTime: Date;
+  date: string;
   weight: number;
 };
 
 // In App Router, the config for body size is handled differently
 export const dynamic = "force-dynamic";
-export const maxDuration = 60; // Set max duration to 60 seconds
+// export const maxDuration = 60; // Set max duration to 60 seconds
 
 export async function POST(request: NextRequest) {
   try {
@@ -56,38 +59,58 @@ export async function POST(request: NextRequest) {
     // Create a readable stream from the file data
     const fileStream = Readable.from(fileData);
 
-    return new Promise<NextResponse>((resolve) => {
+    await new Promise<void>((resolve, reject) => {
       const stream = parse<DateWeightRaw, DateWeight>({ headers: true })
         .transform((row: DateWeightRaw) => {
           // Transform the row data if needed
           return {
-            dateTime: new Date(row.dateTime),
+            date: new Date(row.dateTime).toISOString(),
             weight: parseFloat(row.weight),
           };
         })
-        .on("error", (error) => {
-          console.error("CSV parsing error:", error);
-          resolve(
-            NextResponse.json(
-              { success: false, error: error.message },
-              { status: 500 },
-            ),
-          );
-        })
+        .on("error", reject)
         .on("data", (row: DateWeight) => {
           rows.push(row);
           rowCount++;
         })
         .on("end", () => {
-          // Store the parsed data
-          console.log(`Parsed ${rowCount} rows from CSV: `, rows);
-          resolve(
-            NextResponse.json({ success: true, rowCount }, { status: 200 }),
-          );
+          console.log(`Parsed ${rowCount} rows`);
+          resolve();
         });
 
       // Pipe the data to the parser
       fileStream.pipe(stream);
+    });
+
+    await db.transaction(async (tx) => {
+      for (const item of rows) {
+        try {
+          // Check if entry already exists for this date and user
+          const existingEntry = await tx.query.data.findFirst({
+            where: (fields) =>
+              eq(fields.userId, "1") && eq(fields.date, item.date),
+          });
+
+          if (!existingEntry) {
+            // Insert new entry
+            await tx.insert(data).values({
+              userId: "1",
+              weight: item.weight,
+              date: item.date,
+            });
+          } else {
+            console.log("Entry already exists...");
+          }
+        } catch (err) {
+          console.error("Error inserting/updating row:", err, item);
+          throw err;
+        }
+      }
+    });
+
+    return NextResponse.json({
+      success: true,
+      rowCount,
     });
   } catch (error) {
     console.error("Error parsing CSV:", error);
