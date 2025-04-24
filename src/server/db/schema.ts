@@ -37,8 +37,8 @@ export const data = createTable(
       .notNull()
       .references(() => users.id),
     weight: d.integer().notNull(),
-    // Date in milliseconds since epoch
-    date: d.integer().notNull(),
+    // Date as ISO string (e.g., "2023-04-24T12:00:00.000Z")
+    date: d.text().notNull(),
   }),
   (t) => [index("data_userid_idx").on(t.userId)],
 );
@@ -62,12 +62,12 @@ export const fasts = createTable(
       .text({ length: 255 })
       .notNull()
       .references(() => users.id),
-    startTime: d.integer().notNull(), // Start time in milliseconds since epoch
-    endTime: d.integer(), // End time in milliseconds since epoch (null if fast is ongoing)
+    startTime: d.text().notNull(), // Start time as ISO string (e.g., "2023-04-24T12:00:00.000Z")
+    endTime: d.text(), // End time as ISO string (null if fast is ongoing)
     targetHours: d.integer().notNull(), // Target duration in hours (e.g., 16 for 16:8)
     fastType: d.text({ length: 255 }).notNull(), // Type of fast (e.g., "16:8 INTERMITTENT")
     isCompleted: d.integer().default(0), // 0 for ongoing, 1 for completed
-    createdAt: d.integer().notNull().$defaultFn(() => Date.now()) // When the fast record was created
+    createdAt: d.text().notNull().$defaultFn(() => new Date().toISOString()) // When the fast record was created
   }),
   (t) => [index("fasts_userid_idx").on(t.userId)]
 )

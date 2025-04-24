@@ -76,7 +76,7 @@ export function WeightForm() {
     setIsSubmitting(true);
     addWeightMutation.mutate({
       weight: Number(weight),
-      date: Date.now(),
+      date: new Date(),
     });
   };
 
@@ -84,11 +84,9 @@ export function WeightForm() {
     <>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
-          <Button className="">
-            Add New Weight
-          </Button>
+          <Button className="">Add New Weight</Button>
         </DialogTrigger>
-        <DialogContent className="border-[var(--ctp-text)] bg-card">
+        <DialogContent className="bg-card border-[var(--ctp-text)]">
           <DialogHeader>
             <DialogTitle className="text-white">Add Weight Entry</DialogTitle>
           </DialogHeader>

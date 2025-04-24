@@ -10,16 +10,14 @@ export const dataRouter = createTRPCRouter({
       z.object({
         weight: z.number().int().positive(),
         date: z
-          .number()
-          .int()
-          .positive()
-          .default(() => Date.now()),
+          .date()
+          .default(() => new Date()),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       await ctx.db.insert(data).values({
         weight: input.weight,
-        date: input.date,
+        date: input.date.toISOString(),
         userId: "1",
       });
     }),
