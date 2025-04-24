@@ -68,16 +68,57 @@ export const ImportExport = () => {
     }
   };
 
-  const handleUpload = () => {
-    // Mock upload process
+  const handleUpload = async () => {
     if (file) {
-      // In a real implementation, you would process the file here
-      console.log("Uploading file:", file.name);
+      try {
+        setError(null);
 
-      // Simulate a successful upload after a short delay
-      setTimeout(() => {
-        setIsUploaded(true);
-      }, 1000);
+        // Read the file as base64
+        const reader = new FileReader();
+
+        reader.onload = async (event) => {
+          try {
+            const base64Data = event.target?.result as string;
+
+            // Send the file to the API
+            const response = await fetch("/api/backup", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                file: base64Data,
+                filename: file.name,
+              }),
+            });
+
+            const data = (await response.json()) as {
+              success: boolean;
+              rowCount?: number;
+              error?: string;
+            };
+
+            if (data.success) {
+              setIsUploaded(true);
+              console.log(`Uploaded ${data.rowCount} rows successfully`);
+            } else {
+              setError(data.error ?? "Failed to upload file");
+            }
+          } catch (error) {
+            console.error("Error uploading file:", error);
+            setError("Failed to upload file. Please try again.");
+          }
+        };
+
+        reader.onerror = () => {
+          setError("Failed to read file. Please try again.");
+        };
+
+        reader.readAsDataURL(file);
+      } catch (error) {
+        console.error("Error handling file upload:", error);
+        setError("An unexpected error occurred. Please try again.");
+      }
     }
   };
 
@@ -95,7 +136,7 @@ export const ImportExport = () => {
         {/* File Upload Area */}
         <div
           className={cn(
-            "cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-colors mb-4",
+            "mb-4 cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-colors",
             isDragging ? "border-primary bg-primary/5" : "border-input",
             file ? "bg-accent/50" : "",
           )}
@@ -139,7 +180,7 @@ export const ImportExport = () => {
 
         {/* Upload Button */}
         {file && !isUploaded && (
-          <div className="flex justify-center mb-4">
+          <div className="mb-4 flex justify-center">
             <Button onClick={handleUpload}>
               <Upload className="mr-2 h-4 w-4" />
               Upload File
@@ -217,7 +258,7 @@ export const ImportExport = () => {
       </CardContent>
       <CardFooter>
         {/* Export Button */}
-        <div className="mb-4 flex justify-between w-full">
+        <div className="mb-4 flex w-full justify-between">
           {isUploaded && (
             <Button
               variant="outline"
