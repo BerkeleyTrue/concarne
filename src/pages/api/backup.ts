@@ -2,14 +2,14 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { parse } from "fast-csv";
 import { Readable } from "stream";
 
-// Type for CSV data
-type CsvData = {
-  headers: string[];
-  rows: Record<string, string>[];
-};
-
-// Global variable to store the last parsed CSV data
-let lastParsedData: CsvData | null = null;
+type DateWeightRaw = {
+  dateTime: string;
+  weight: string;
+}
+type DateWeight = {
+  dateTime: Date;
+  weight: number;
+}
 
 // Configure bodyParser to handle JSON data
 export const config = {
@@ -59,32 +59,33 @@ export default async function handler(
     });
 
     // Parse the CSV file
-    const rows: Record<string, string>[] = [];
-    let headers: string[] = [];
+    const rows: DateWeight[] = [];
     let rowCount = 0;
 
     // Create a readable stream from the file data
     const fileStream = Readable.from(fileData);
 
     return new Promise<void>((resolve) => {
-      const stream = parse({ headers: true })
+      const stream = parse<DateWeightRaw, DateWeight>({ headers: true })
+        .transform((row: DateWeightRaw) => {
+          // Transform the row data if needed
+          return {
+            dateTime: new Date(row.dateTime),
+            weight: parseFloat(row.weight),
+          };
+        })
         .on("error", (error) => {
           console.error("CSV parsing error:", error);
           res.status(500).json({ success: false, error: error.message });
           resolve();
         })
-        .on("headers", (headerList) => {
-          headers = headerList;
-          console.log("CSV headers:", headerList);
-        })
-        .on("data", (row) => {
+        .on("data", (row: DateWeight) => {
           rows.push(row);
           rowCount++;
         })
         .on("end", () => {
           // Store the parsed data
-          lastParsedData = { headers, rows };
-          console.log(`Parsed ${rowCount} rows from CSV`);
+          console.log(`Parsed ${rowCount} rows from CSV: `, rows);
           res.status(200).json({ success: true, rowCount });
           resolve();
         });
