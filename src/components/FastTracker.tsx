@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Edit } from "lucide-react";
 import { Card, CardContent, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
 
 export default function FastingTracker() {
   const [remainingTime, setRemainingTime] = useState("0:58:52");
@@ -19,7 +20,7 @@ export default function FastingTracker() {
 
       <CardContent>
         <div className="flex items-center justify-center">
-          <Badge>16:8 INTERMITTENT</Badge>
+          <Badge className="px-4">16:8 INTERMITTENT</Badge>
         </div>
 
         <div className="relative my-4 flex h-64 w-64 items-center justify-center">
@@ -63,11 +64,11 @@ export default function FastingTracker() {
           </div>
         </div>
 
-        <button className="my-4 w-full rounded-full border border-[#e78284] bg-[#414559] py-3 font-medium text-[#e78284] transition-colors hover:bg-[#51576d]">
-          End fast
-        </button>
+        <div className="flex items-center justify-center mb-4">
+          <Button variant="outline">End fast</Button>
+        </div>
 
-        <div className="mt-2 flex w-full justify-between px-2 text-xs text-[#b5bfe2]">
+        <div className="mt-2 flex w-full justify-between px-2 text-xs text-[#b5bfe2] gap-2">
           <div>
             <div className="uppercase">Started fasting</div>
             <div className="mt-1 flex items-center text-[#f9e2af]">
