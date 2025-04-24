@@ -16,6 +16,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { format } from "date-fns";
+import { Card, CardContent, CardTitle } from "./ui/card";
 
 type Payload = {
   date: Date;
@@ -63,7 +64,7 @@ export function WeightChart() {
   const chartConfig = {
     weight: {
       label: "Weight",
-      color: "#8884d8",
+      color: "#ca9ee6",
     },
   } satisfies ChartConfig;
 
@@ -75,16 +76,16 @@ export function WeightChart() {
 
   if (chartData.length === 0) {
     return (
-      <div className="flex h-80 w-full items-center justify-center rounded-lg border border-white/20 bg-white/5 p-6 text-white">
+      <div className="bg-card text-card-foreground flex h-80 w-full items-center justify-center border border-[var(--ctp-text)]/20 p-6">
         <p>No weight data available. Add your weight to see the chart.</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full rounded-lg border border-white/20 bg-white/5 p-6 text-white">
-      <h2 className="mb-4 text-2xl font-bold">Weight History</h2>
-      <div className="h-full min-h-80 overflow-x-auto overflow-y-auto">
+    <Card className="bg-card text-card-foreground w-full rounded-lg border border-[var(--ctp-text)]/20 p-6">
+      <CardTitle>Weight History</CardTitle>
+      <CardContent className="h-full min-h-80 overflow-x-auto overflow-y-auto">
         <ChartContainer config={chartConfig}>
           <LineChart
             data={chartData}
@@ -95,7 +96,7 @@ export function WeightChart() {
             <XAxis
               dataKey="date"
               tickFormatter={(date: string) => format(date, "MMM d")}
-              tick={{ fill: "#9ca3af" }}
+              tick={{ fill: "#949cbb" }}
             />
             <YAxis
               domain={[
@@ -108,7 +109,7 @@ export function WeightChart() {
                   bmi35Weight > 0 ? bmi35Weight + 20 : maxWeight,
                 ),
               ]}
-              tick={{ fill: "#9ca3af" }}
+              tick={{ fill: "#949cbb" }}
               tickFormatter={(value) => `${value} lbs`}
               padding={{ top: 20, bottom: 20 }}
             />
@@ -135,7 +136,7 @@ export function WeightChart() {
               type="monotone"
               dataKey="weight"
               name="weight"
-              stroke="#8884d8"
+              stroke="#babbf1"
               strokeWidth={2}
               dot={{ r: 4 }}
               activeDot={{ r: 6 }}
@@ -143,31 +144,31 @@ export function WeightChart() {
             {heightInInches > 0 && bmi30Weight > 0 && (
               <ReferenceLine
                 y={bmi30Weight}
-                stroke="#ff9800"
+                stroke="#ef9f76"
                 strokeDasharray="3 3"
                 label={{
                   value: `BMI 30 (${bmi30Weight} lbs) Class 1`,
                   position: "insideBottomRight",
-                  fill: "#ff9800",
+                  fill: "#ef9f76",
                 }}
               />
             )}
             {heightInInches > 0 && bmi35Weight > 0 && (
               <ReferenceLine
                 y={bmi35Weight}
-                stroke="#f44336"
+                stroke="#e78284"
                 strokeDasharray="3 3"
                 label={{
                   value: `BMI 35 (${bmi35Weight} lbs) Class 2`,
                   position: "insideBottomRight",
-                  fill: "#f44336",
+                  fill: "#e78284",
                 }}
               />
             )}
             <ChartLegend content={<ChartLegendContent />} />
           </LineChart>
         </ChartContainer>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

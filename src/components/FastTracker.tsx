@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { Edit } from "lucide-react";
+import { Card, CardContent, CardTitle } from "./ui/card";
+import { Badge } from "./ui/badge";
 
 export default function FastingTracker() {
   const [remainingTime, setRemainingTime] = useState("0:58:52");
@@ -12,16 +14,12 @@ export default function FastingTracker() {
   // but for demo purposes we're keeping it static
 
   return (
-    <div className="flex flex-col items-center">
-      <div className="flex w-full max-w-md flex-col items-center overflow-hidden rounded-3xl bg-[#414559] px-6 pt-10 pb-4 shadow-sm">
-        <div className="mb-1 text-center">
-          <h1 className="text-xl font-semibold text-[#c6d0f5]">
-            You&apos;re fasting!
-          </h1>
-        </div>
+    <Card>
+      <CardTitle className="px-6">You&apos;re fasting!</CardTitle>
 
-        <div className="my-4 rounded-full bg-[#51576d] px-4 py-1.5 text-xs font-medium text-[#c6d0f5]">
-          16:8 INTERMITTENT
+      <CardContent>
+        <div className="flex items-center justify-center">
+          <Badge>16:8 INTERMITTENT</Badge>
         </div>
 
         <div className="relative my-4 flex h-64 w-64 items-center justify-center">
@@ -83,7 +81,7 @@ export default function FastingTracker() {
             <div className="mt-1 text-[#c6d0f5]">Today, 2:22 PM</div>
           </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

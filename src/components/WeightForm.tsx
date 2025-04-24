@@ -84,11 +84,11 @@ export function WeightForm() {
     <>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
-          <Button className="bg-white/10 hover:bg-white/20">
+          <Button className="">
             Add New Weight
           </Button>
         </DialogTrigger>
-        <DialogContent className="border-white/20 bg-[#2e026d]">
+        <DialogContent className="border-[var(--ctp-text)] bg-card">
           <DialogHeader>
             <DialogTitle className="text-white">Add Weight Entry</DialogTitle>
           </DialogHeader>
@@ -106,7 +106,7 @@ export function WeightForm() {
                 placeholder="Enter your weight in pounds"
                 value={weight}
                 onChange={handleWeightChange}
-                className={`bg-white/5 text-white ${error ? "border-red-500" : ""}`}
+                className={`bg-[var(--ctp-text)]/5 text-white ${error ? "border-red-500" : ""}`}
                 min="10"
                 step="0.1"
                 required
