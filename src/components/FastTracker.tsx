@@ -16,7 +16,7 @@ export default function FastingTracker() {
 
   return (
     <Card>
-      <CardTitle className="px-6">You&apos;re fasting!</CardTitle>
+      <CardTitle>You&apos;re fasting!</CardTitle>
 
       <CardContent>
         <div className="flex items-center justify-center">
