@@ -44,16 +44,16 @@ export function WeightChart() {
   const [showScrollHint, setShowScrollHint] = useState(false);
   // Initialize with a default domain instead of null
 
-  // Sort data by date (oldest to newest)
-  const sortedData = [...data].sort((a, b) => +a.date - +b.date);
+  // Sort data by date (newest to oldest)
+  const sortedData = [...data].sort((a, b) => +b.date - +a.date);
 
   // Limit the number of data points to prevent rendering issues
   // If there are too many points, sample them to reduce the total
   let dataToUse = sortedData;
   if (sortedData.length > 100) {
     // For large datasets, sample every nth point but always include the most recent 30 points
-    const recentPoints = sortedData.slice(-30);
-    const olderPoints = sortedData.slice(0, -30);
+    const recentPoints = sortedData.slice(0, 30);
+    const olderPoints = sortedData.slice(30);
 
     // Sample older points at regular intervals
     const samplingRate = Math.ceil(olderPoints.length / 70); // Aim for about 70 older points
@@ -61,7 +61,7 @@ export function WeightChart() {
       (_, index) => index % samplingRate === 0,
     );
 
-    dataToUse = [...sampledOlderPoints, ...recentPoints];
+    dataToUse = [...recentPoints, ...sampledOlderPoints];
     console.log(
       `Reduced data points from ${sortedData.length} to ${dataToUse.length}`,
     );
@@ -144,9 +144,9 @@ export function WeightChart() {
 
     if (minWeight === Infinity || maxWeight === -Infinity) return;
 
-    // Calculate min and max with padding
-    const visibleMin = Math.max(0, minWeight - 5);
-    const visibleMax = maxWeight + 5;
+    // Calculate min and max with minimal padding for tighter focus
+    const visibleMin = Math.max(0, minWeight - 2); // Reduced padding from 5 to 2
+    const visibleMax = maxWeight + 2; // Reduced padding from 5 to 2
 
     // Only update if there's a significant change (prevents unnecessary re-renders)
     if (
@@ -169,7 +169,7 @@ export function WeightChart() {
     if (chartData.length > DEFAULT_VISIBLE_POINTS) {
       setShowScrollHint(true);
 
-      // Scroll to the end to show most recent data by default
+      // Scroll to the beginning to show most recent data by default
       if (containerRef.current) {
         // Use a single timeout with a longer delay to ensure chart is fully rendered
         const scrollTimer = setTimeout(() => {
@@ -212,7 +212,6 @@ export function WeightChart() {
 
     // Debounce function to limit how often we update during scrolling
     let scrollTimeout: NodeJS.Timeout | null = null;
-    let isScrolling = false;
 
     const handleScroll = () => {
       if (!autoScaleEnabled) return;
@@ -222,12 +221,8 @@ export function WeightChart() {
         clearTimeout(scrollTimeout);
       }
 
-      // Set a flag that we're currently scrolling
-      isScrolling = true;
-
       // Only update the domain when scrolling stops
       scrollTimeout = setTimeout(() => {
-        isScrolling = false;
         updateVisibleYDomain();
       }, 150); // Wait 150ms after scrolling stops before updating
     };
@@ -364,6 +359,7 @@ export function WeightChart() {
                   dataKey="date"
                   tickFormatter={(date: string) => format(date, "MMM d")}
                   tick={{ fill: "#949cbb" }}
+                  reversed={true} // Reverse the x-axis to maintain chronological order
                 />
                 <YAxis
                   domain={
@@ -383,10 +379,14 @@ export function WeightChart() {
                   }
                   tick={{ fill: "#949cbb" }}
                   tickFormatter={(value) => `${value} lbs`}
-                  padding={{ top: 20, bottom: 20 }}
+                  padding={{ top: 10, bottom: 10 }} // Reduced padding
                   width={60}
                   // Limit the number of ticks to prevent overcrowding
-                  tickCount={7}
+                  tickCount={5} // Reduced from 7 to 5 for less crowding
+                  // Allow decimal ticks when range is small
+                  allowDecimals={true}
+                  // Ensure ticks are at nice intervals
+                  scale="auto"
                 />
                 <ChartTooltip
                   content={({ active, payload }) => {
