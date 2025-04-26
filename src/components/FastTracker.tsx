@@ -361,8 +361,8 @@ export default function FastingTracker({
               {isCompleted ? "Ended fasting" : "Fast ending"}
             </div>
             <div className="mt-1 text-[#c6d0f5]">
-              {isCompleted
-                ? formatDateTime(currentFast.endTime)
+              {endTime
+                ? formatDateTime(endTime.toISOString())
                 : currentFast.startTime
                   ? formatDateTime(
                       new Date(
