@@ -9,9 +9,7 @@ export const dataRouter = createTRPCRouter({
     .input(
       z.object({
         weight: z.number().int().positive(),
-        date: z
-          .date()
-          .default(() => new Date()),
+        date: z.date().default(() => new Date()),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -30,6 +28,19 @@ export const dataRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       return ctx.db.query.data.findMany({
+        where: eq(data.userId, input.userId),
+        orderBy: [desc(data.date)],
+      });
+    }),
+
+  getLatest: protectedProcedure
+    .input(
+      z.object({
+        userId: z.string().min(1),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      return ctx.db.query.data.findFirst({
         where: eq(data.userId, input.userId),
         orderBy: [desc(data.date)],
       });

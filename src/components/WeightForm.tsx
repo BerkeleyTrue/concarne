@@ -1,6 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,10 +14,19 @@ import { api } from "@/lib/trpc/client";
 import { startOfDay } from "date-fns";
 
 export function WeightForm() {
+  const { data: lastWeight } = api.data.getLatest.useQuery({
+    userId: "1",
+  });
   const [isOpen, setIsOpen] = useState(false);
-  const [weight, setWeight] = useState("");
+  const [weight, setWeight] = useState<string>(lastWeight?.weight.toString() ?? "");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!weight && lastWeight) {
+      setWeight(lastWeight.weight.toString());
+    }
+  }, [lastWeight, weight]);
 
   const utils = api.useUtils();
 
