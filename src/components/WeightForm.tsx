@@ -11,6 +11,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { api } from "@/lib/trpc/client";
+import { startOfDay } from "date-fns";
 
 export function WeightForm() {
   const [isOpen, setIsOpen] = useState(false);
@@ -77,7 +78,7 @@ export function WeightForm() {
     setIsSubmitting(true);
     addWeightMutation.mutate({
       weight: Number(weight),
-      date: new Date(),
+      date: startOfDay(new Date()),
     });
   };
 
