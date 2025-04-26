@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Edit } from "lucide-react";
 import { Card, CardContent, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
@@ -41,14 +41,122 @@ export default function FastingTracker({
 }: {
   initFast: Fast | undefined;
 }) {
+  const utils = api.useUtils();
   const { data: currentFast = initFast } = api.fast.getCurrentFast.useQuery({
     userId: "1",
   });
-  const { mutate: startFast } = api.fast.startFast.useMutation();
+  const { mutate: createFast } = api.fast.createFast.useMutation({
+    onSuccess: () => {
+      // Refetch the current fast after creating
+      void utils.fast.getCurrentFast.invalidate();
+    },
+  });
+  const { mutate: startFast } = api.fast.startFast.useMutation({
+    onSuccess: () => {
+      // Refetch the current fast after starting
+      void utils.fast.getCurrentFast.invalidate();
+    },
+  });
+  const { mutate: endFast } = api.fast.endFast.useMutation({
+    onSuccess: () => {
+      // Refetch the current fast after ending
+      void utils.fast.getCurrentFast.invalidate();
+    },
+  });
 
-  const [remainingTime, setRemainingTime] = useState("0:58:52");
-  const [elapsedTime, setElapsedTime] = useState("15:01:07");
-  const [progress, setProgress] = useState(7);
+  const [timeState, setTimeState] = useState({
+    remainingTime: "0:00:00",
+    elapsedTime: "0:00:00",
+    progress: 0,
+    elapsedPercent: 0,
+    remainingPercent: 100,
+  });
+
+  // Update timer every second
+  useEffect(() => {
+    if (!currentFast?.startTime) return;
+
+    const intervalId = setInterval(() => {
+      if (!currentFast.startTime) return;
+
+      const startTime = new Date(currentFast.startTime);
+      const now = new Date();
+      const targetEndTime = new Date(startTime);
+      targetEndTime.setHours(
+        targetEndTime.getHours() + currentFast.targetHours,
+      );
+
+      // If fast is completed
+      if (currentFast.endTime) {
+        clearInterval(intervalId);
+        const endTime = new Date(currentFast.endTime);
+        const totalDurationMs = endTime.getTime() - startTime.getTime();
+        const totalTargetMs = targetEndTime.getTime() - startTime.getTime();
+        const progress = Math.min(
+          100,
+          Math.round((totalDurationMs / totalTargetMs) * 100),
+        );
+
+        setTimeState({
+          elapsedTime: formatDuration(totalDurationMs),
+          remainingTime: "0:00:00",
+          progress: progress,
+          elapsedPercent: progress,
+          remainingPercent: 0,
+        });
+        return;
+      }
+
+      // For ongoing fast
+      const elapsedMs = now.getTime() - startTime.getTime();
+      const remainingMs = Math.max(0, targetEndTime.getTime() - now.getTime());
+      const totalDurationMs = currentFast.targetHours * 60 * 60 * 1000;
+      const progress = Math.min(
+        100,
+        Math.round((elapsedMs / totalDurationMs) * 100),
+      );
+
+      setTimeState({
+        elapsedTime: formatDuration(elapsedMs),
+        remainingTime: formatDuration(remainingMs),
+        progress: progress,
+        elapsedPercent: progress,
+        remainingPercent: 100 - progress,
+      });
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [currentFast]);
+
+  // Helper function to format duration in HH:MM:SS
+  const formatDuration = (ms: number) => {
+    const seconds = Math.floor((ms / 1000) % 60);
+    const minutes = Math.floor((ms / (1000 * 60)) % 60);
+    const hours = Math.floor(ms / (1000 * 60 * 60));
+
+    return `${hours}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  };
+
+  // Helper function to format date in "Today/Yesterday, HH:MM AM/PM" format
+  const formatDateTime = (dateString: string | null | undefined) => {
+    if (!dateString) return "";
+
+    const date = new Date(dateString);
+    const now = new Date();
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    let prefix = "";
+    if (date.toDateString() === now.toDateString()) {
+      prefix = "Today";
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      prefix = "Yesterday";
+    } else {
+      prefix = date.toLocaleDateString();
+    }
+
+    return `${prefix}, ${date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+  };
 
   // This would normally be connected to a timer logic
   // but for demo purposes we're keeping it static
@@ -61,10 +169,9 @@ export default function FastingTracker({
             <Button
               key={fast.name}
               onClick={() => {
-                startFast({
+                createFast({
                   userId: "1",
                   duration: fast.duration,
-                  startTime: new Date(),
                 });
               }}
             >
@@ -76,13 +183,56 @@ export default function FastingTracker({
     );
   }
 
+  // If fast exists but hasn't been started yet
+  if (currentFast && !currentFast.startTime) {
+    const selectedFastType = fastTypes.find(
+      (fast) => fast.duration === currentFast.targetHours,
+    );
+
+    return (
+      <Card>
+        <CardContent className="flex flex-col items-center gap-4 pt-6">
+          <CardTitle>Ready to Begin Your Fast</CardTitle>
+
+          <Badge className="px-4">
+            {selectedFastType?.name ?? `${currentFast.targetHours}-HOUR FAST`}
+          </Badge>
+
+          <div className="my-4 text-center">
+            <p className="mb-2 text-[#b5bfe2]">
+              You&apos;ve selected a {currentFast.targetHours}-hour fast.
+            </p>
+            <p className="text-[#b5bfe2]">
+              Click the button below when you&apos;re ready to start.
+            </p>
+          </div>
+
+          <Button
+            onClick={() => {
+              startFast({
+                id: currentFast.id ?? "000",
+                userId: currentFast.userId,
+                startTime: new Date().toISOString(),
+              });
+            }}
+            className="mt-2"
+          >
+            Start Fasting Now
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardTitle>You&apos;re fasting!</CardTitle>
 
       <CardContent>
         <div className="flex items-center justify-center">
-          <Badge className="px-4">16:8 INTERMITTENT</Badge>
+          <Badge className="px-4">
+            {currentFast.fastType || `${currentFast.targetHours}-HOUR FAST`}
+          </Badge>
         </div>
 
         <div className="relative my-4 flex h-64 w-64 items-center justify-center">
@@ -108,40 +258,64 @@ export default function FastingTracker({
               strokeWidth="10"
               strokeLinecap="round"
               strokeDasharray="282.7"
-              strokeDashoffset={282.7 - (282.7 * progress) / 100}
+              strokeDashoffset={282.7 - (282.7 * timeState.progress) / 100}
               transform="rotate(-90 50 50)"
             />
           </svg>
 
           {/* Center Text */}
           <div className="absolute flex flex-col items-center justify-center text-center">
-            <div className="mb-1 text-xs text-[#b5bfe2]">REMAINING (7%)</div>
+            <div className="mb-1 text-xs text-[#b5bfe2]">
+              REMAINING ({timeState.remainingPercent}%)
+            </div>
             <div className="text-4xl font-semibold text-[#c6d0f5]">
-              {remainingTime}
+              {timeState.remainingTime}
             </div>
             <div className="mt-1 text-xs text-[#b5bfe2]">
-              Elapsed Time (93%)
+              Elapsed Time ({timeState.elapsedPercent}%)
             </div>
-            <div className="text-sm text-[#b5bfe2]">{elapsedTime}</div>
+            <div className="text-sm text-[#b5bfe2]">
+              {timeState.elapsedTime}
+            </div>
           </div>
         </div>
 
         <div className="mb-4 flex items-center justify-center">
-          <Button variant="outline">End fast</Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              void endFast({
+                id: currentFast.id ?? "000",
+                userId: currentFast.userId,
+                endTime: new Date().toISOString(),
+              });
+            }}
+          >
+            End fast
+          </Button>
         </div>
 
         <div className="mt-2 flex w-full justify-between gap-2 px-2 text-xs text-[#b5bfe2]">
           <div>
             <div className="uppercase">Started fasting</div>
             <div className="mt-1 flex items-center text-[#f9e2af]">
-              <span>Yesterday, 10:22 PM</span>
+              <span>{formatDateTime(currentFast.startTime)}</span>
               <Edit className="ml-1 h-3 w-3" />
             </div>
           </div>
 
           <div className="text-right">
             <div className="uppercase">Fast ending</div>
-            <div className="mt-1 text-[#c6d0f5]">Today, 2:22 PM</div>
+            <div className="mt-1 text-[#c6d0f5]">
+              {currentFast.startTime
+                ? formatDateTime(
+                    new Date(
+                      new Date(currentFast.startTime).getTime() +
+                        currentFast.targetHours * 60 * 60 * 1000,
+                    ).toISOString(),
+                  )
+                : "Not started"}
+            </div>
           </div>
         </div>
       </CardContent>

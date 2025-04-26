@@ -67,11 +67,10 @@ export const fasts = createTable(
       .text({ length: 255 })
       .notNull()
       .references(() => users.id),
-    startTime: d.text().notNull(), // Start time as ISO string (e.g., "2023-04-24T12:00:00.000Z")
+    startTime: d.text(), // Start time as ISO string (e.g., "2023-04-24T12:00:00.000Z"), null for unstarted
     endTime: d.text(), // End time as ISO string (null if fast is ongoing)
     targetHours: d.integer().notNull(), // Target duration in hours (e.g., 16 for 16:8)
     fastType: d.text({ length: 255 }).notNull(), // Type of fast (e.g., "16:8 INTERMITTENT")
-    isCompleted: d.integer().default(0), // 0 for ongoing, 1 for completed
     createdAt: d
       .text()
       .notNull()

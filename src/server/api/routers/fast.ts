@@ -5,21 +5,53 @@ import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { fasts } from "@/server/db/schema";
 
 export const fastRouter = createTRPCRouter({
-  startFast: protectedProcedure
+  createFast: protectedProcedure
     .input(
       z.object({
         userId: z.string().min(1),
         duration: z.number().int().positive(),
-        startTime: z.date(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       await ctx.db.insert(fasts).values({
         userId: "1",
-        startTime: input.startTime.toISOString(),
         targetHours: input.duration,
         fastType: "16:8 INTERMITTENT",
       });
+    }),
+
+  startFast: protectedProcedure
+    .input(
+      z.object({
+        id: z.string().min(1),
+        userId: z.string().min(1),
+        startTime: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db
+        .update(fasts)
+        .set({
+          startTime: input.startTime,
+        })
+        .where(eq(fasts.id, input.id));
+    }),
+
+  endFast: protectedProcedure
+    .input(
+      z.object({
+        id: z.string().min(1),
+        userId: z.string().min(1),
+        endTime: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db
+        .update(fasts)
+        .set({
+          endTime: input.endTime,
+        })
+        .where(eq(fasts.id, input.id));
     }),
 
   getCurrentFast: protectedProcedure
