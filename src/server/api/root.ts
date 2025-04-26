@@ -2,6 +2,7 @@ import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 import { dataRouter } from "./routers/data";
 import { devRouter } from "./routers/dev";
 import { authRouter } from "./routers/auth";
+import { fastRouter } from "./routers/fast";
 
 /**
  * This is the primary router for your server.
@@ -11,6 +12,7 @@ import { authRouter } from "./routers/auth";
 export const appRouter = createTRPCRouter({
   auth: authRouter,
   data: dataRouter,
+  fast: fastRouter,
   dev: devRouter,
 });
 

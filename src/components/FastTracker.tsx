@@ -5,14 +5,76 @@ import { Edit } from "lucide-react";
 import { Card, CardContent, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
+import { api } from "@/lib/trpc/client";
+import type { Fast } from "@/server/db/schema";
 
-export default function FastingTracker() {
+// duration in hours
+const fastTypes = [
+  {
+    name: "Circadian Diet",
+    duration: 13,
+  },
+  {
+    name: "16:8 Intermittent",
+    duration: 16,
+  },
+  {
+    name: "18:6 Intermittent",
+    duration: 18,
+  },
+  {
+    name: "20:4 Intermittent",
+    duration: 20,
+  },
+  {
+    name: "20:4 Warrior",
+    duration: 20,
+  },
+  {
+    name: "36-Hour Fast",
+    duration: 36,
+  },
+];
+
+export default function FastingTracker({
+  initFast,
+}: {
+  initFast: Fast | undefined;
+}) {
+  const { data: currentFast = initFast } = api.fast.getCurrentFast.useQuery({
+    userId: "1",
+  });
+  const { mutate: startFast } = api.fast.startFast.useMutation();
+
   const [remainingTime, setRemainingTime] = useState("0:58:52");
   const [elapsedTime, setElapsedTime] = useState("15:01:07");
   const [progress, setProgress] = useState(7);
 
   // This would normally be connected to a timer logic
   // but for demo purposes we're keeping it static
+  if (!currentFast) {
+    return (
+      <div className="flex flex-col items-center gap-2">
+        <h1 className="text-2xl font-bold">Start a Fast</h1>
+        <div className="flex flex-col gap-2">
+          {fastTypes.map((fast) => (
+            <Button
+              key={fast.name}
+              onClick={() => {
+                startFast({
+                  userId: "1",
+                  duration: fast.duration,
+                  startTime: new Date(),
+                });
+              }}
+            >
+              {fast.name}
+            </Button>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Card>
@@ -64,11 +126,11 @@ export default function FastingTracker() {
           </div>
         </div>
 
-        <div className="flex items-center justify-center mb-4">
+        <div className="mb-4 flex items-center justify-center">
           <Button variant="outline">End fast</Button>
         </div>
 
-        <div className="mt-2 flex w-full justify-between px-2 text-xs text-[#b5bfe2] gap-2">
+        <div className="mt-2 flex w-full justify-between gap-2 px-2 text-xs text-[#b5bfe2]">
           <div>
             <div className="uppercase">Started fasting</div>
             <div className="mt-1 flex items-center text-[#f9e2af]">

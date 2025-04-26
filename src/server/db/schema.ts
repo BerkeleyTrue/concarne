@@ -1,5 +1,7 @@
 import { relations } from "drizzle-orm";
 import { index, sqliteTableCreator } from "drizzle-orm/sqlite-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import type { z } from "zod";
 
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
@@ -17,7 +19,7 @@ export const users = createTable("user", (d) => ({
     .$defaultFn(() => crypto.randomUUID()),
   username: d.text({ length: 255 }),
   password: d.text({ length: 255 }),
-  height: d.integer()
+  height: d.integer(),
 }));
 
 export const usersRelations = relations(users, (s) => ({
@@ -70,10 +72,17 @@ export const fasts = createTable(
     targetHours: d.integer().notNull(), // Target duration in hours (e.g., 16 for 16:8)
     fastType: d.text({ length: 255 }).notNull(), // Type of fast (e.g., "16:8 INTERMITTENT")
     isCompleted: d.integer().default(0), // 0 for ongoing, 1 for completed
-    createdAt: d.text().notNull().$defaultFn(() => new Date().toISOString()) // When the fast record was created
+    createdAt: d
+      .text()
+      .notNull()
+      .$defaultFn(() => new Date().toISOString()), // When the fast record was created
   }),
-  (t) => [index("fasts_userid_idx").on(t.userId)]
-)
+  (t) => [index("fasts_userid_idx").on(t.userId)],
+);
+
+export const fastsSelectSchema = createInsertSchema(fasts);
+// the type of the fast stored in
+export type Fast = z.infer<typeof fastsSelectSchema>;
 
 export const fastsRelations = relations(fasts, ({ one }) => ({
   user: one(users, {
