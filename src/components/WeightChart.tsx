@@ -1,4 +1,5 @@
 "use client";
+import { useRef, useState, useEffect } from "react";
 import {
   ChartContainer,
   ChartTooltip,
@@ -18,12 +19,19 @@ import {
 import { format } from "date-fns";
 import { Card, CardContent, CardTitle } from "./ui/card";
 import { api } from "@/lib/trpc/client";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 type Payload = {
   date: Date;
   weight: number;
   formattedDate: string;
 };
+
+// Number of data points to show in the default view
+const DEFAULT_VISIBLE_POINTS = 14; // Show last 2 weeks by default
+const POINT_WIDTH = 30; // Width per data point in pixels (reduced from 60)
+const CHART_HEIGHT = 400; // Fixed height for the chart
+const MAX_CHART_WIDTH = 2000; // Maximum chart width to prevent rendering issues
 
 export function WeightChart() {
   const { data = [], isLoading } = api.data.getAll.useQuery({
@@ -32,12 +40,35 @@ export function WeightChart() {
   const { data: user } = api.auth.getUser.useQuery({
     userId: "1",
   });
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [showScrollHint, setShowScrollHint] = useState(false);
+  // Initialize with a default domain instead of null
 
   // Sort data by date (oldest to newest)
   const sortedData = [...data].sort((a, b) => +a.date - +b.date);
 
+  // Limit the number of data points to prevent rendering issues
+  // If there are too many points, sample them to reduce the total
+  let dataToUse = sortedData;
+  if (sortedData.length > 100) {
+    // For large datasets, sample every nth point but always include the most recent 30 points
+    const recentPoints = sortedData.slice(-30);
+    const olderPoints = sortedData.slice(0, -30);
+
+    // Sample older points at regular intervals
+    const samplingRate = Math.ceil(olderPoints.length / 70); // Aim for about 70 older points
+    const sampledOlderPoints = olderPoints.filter(
+      (_, index) => index % samplingRate === 0,
+    );
+
+    dataToUse = [...sampledOlderPoints, ...recentPoints];
+    console.log(
+      `Reduced data points from ${sortedData.length} to ${dataToUse.length}`,
+    );
+  }
+
   // Format data for the chart
-  const chartData = sortedData.map((entry) => ({
+  const chartData = dataToUse.map((entry) => ({
     date: new Date(entry.date),
     weight: entry.weight,
     formattedDate: format(new Date(entry.date), "MMM d, yyyy"),
@@ -45,8 +76,9 @@ export function WeightChart() {
 
   // Calculate min and max weight for Y-axis domain with some padding
   const weights = chartData.map((entry) => entry.weight);
-  const minWeight = Math.max(0, Math.min(...weights) - 5);
-  const maxWeight = Math.max(...weights) + 5;
+  const minWeight =
+    weights.length > 0 ? Math.max(0, Math.min(...weights) - 5) : 0;
+  const maxWeight = weights.length > 0 ? Math.max(...weights) + 5 : 100;
 
   // Calculate BMI threshold weights based on user's height (in inches)
   // Using the formula: BMI = (weight in pounds * 703) / (height in inches)²
@@ -61,6 +93,156 @@ export function WeightChart() {
       ? Math.round((35 * heightInInches * heightInInches) / 703)
       : 0;
 
+  // Calculate chart width based on number of data points, with a maximum limit
+  const chartWidth = Math.min(
+    Math.max(chartData.length * POINT_WIDTH, 500),
+    MAX_CHART_WIDTH,
+  );
+
+  // Track visible data range for y-axis auto-scaling
+  const [visibleYDomain, setVisibleYDomain] = useState<[number, number] | null>(
+    null,
+  );
+
+  // Function to toggle y-axis auto-scaling
+  const [autoScaleEnabled, setAutoScaleEnabled] = useState(true);
+
+  // Use a debounced version to prevent excessive calculations
+  const updateVisibleYDomain = () => {
+    if (!containerRef.current || chartData.length === 0 || !autoScaleEnabled)
+      return;
+
+    const containerWidth = containerRef.current.clientWidth;
+    const scrollLeft = containerRef.current.scrollLeft;
+
+    // Calculate the visible range of data points
+    const pointsPerScreen = Math.floor(containerWidth / POINT_WIDTH);
+    const startIndex = Math.floor(scrollLeft / POINT_WIDTH);
+    const endIndex = Math.min(
+      startIndex + pointsPerScreen,
+      chartData.length - 1,
+    );
+
+    // Skip if we're trying to calculate for too many points
+    if (endIndex - startIndex > 100) {
+      console.log("Too many points to calculate y-domain, skipping");
+      return;
+    }
+
+    // Get weights only from visible data points - use a more efficient approach
+    let minWeight = Infinity;
+    let maxWeight = -Infinity;
+
+    // Manual min/max calculation is faster than using Math.min/max with spread
+    for (let i = startIndex; i <= endIndex; i++) {
+      if (i >= 0 && i < chartData.length) {
+        const weight = chartData?.[i]?.weight ?? 0;
+        if (weight < minWeight) minWeight = weight;
+        if (weight > maxWeight) maxWeight = weight;
+      }
+    }
+
+    if (minWeight === Infinity || maxWeight === -Infinity) return;
+
+    // Calculate min and max with padding
+    const visibleMin = Math.max(0, minWeight - 5);
+    const visibleMax = maxWeight + 5;
+
+    // Only update if there's a significant change (prevents unnecessary re-renders)
+    if (
+      !visibleYDomain ||
+      Math.abs(visibleYDomain[0] - visibleMin) > 1 ||
+      Math.abs(visibleYDomain[1] - visibleMax) > 1
+    ) {
+      setVisibleYDomain([visibleMin, visibleMax]);
+      console.log(
+        `Y-axis auto-scaled: [${visibleMin}, ${visibleMax}] (points ${startIndex}-${endIndex})`,
+      );
+    }
+  };
+
+  // Determine if we need to show scroll hint (if there are more points than visible)
+  useEffect(() => {
+    console.log("Chart width:", chartWidth); // Debug: Log chart width
+    console.log("Chart data length:", chartData.length); // Debug: Log data length
+
+    if (chartData.length > DEFAULT_VISIBLE_POINTS) {
+      setShowScrollHint(true);
+
+      // Scroll to the end to show most recent data by default
+      if (containerRef.current) {
+        // Use a single timeout with a longer delay to ensure chart is fully rendered
+        const scrollTimer = setTimeout(() => {
+          if (containerRef.current) {
+            // Scroll to show the most recent data (right side of chart)
+            const scrollPosition = Math.max(
+              0,
+              chartWidth - containerRef.current.clientWidth,
+            );
+            console.log("Container width:", containerRef.current.clientWidth);
+            console.log("Scrolling to:", scrollPosition);
+            containerRef.current.scrollLeft = scrollPosition;
+
+            // Y-axis update will happen via the scroll event listener
+          }
+        }, 600); // Increased timeout to ensure chart is fully rendered
+
+        // Hide the hint after 5 seconds
+        const hintTimer = setTimeout(() => {
+          setShowScrollHint(false);
+        }, 5000);
+
+        return () => {
+          clearTimeout(scrollTimer);
+          clearTimeout(hintTimer);
+        };
+      }
+    }
+  }, [chartData.length, chartWidth]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Initial update of visible domain
+    if (autoScaleEnabled) {
+      // Delay initial update to ensure chart is fully rendered
+      setTimeout(updateVisibleYDomain, 100);
+    }
+
+    // Debounce function to limit how often we update during scrolling
+    let scrollTimeout: NodeJS.Timeout | null = null;
+    let isScrolling = false;
+
+    const handleScroll = () => {
+      if (!autoScaleEnabled) return;
+
+      // Clear previous timeout
+      if (scrollTimeout) {
+        clearTimeout(scrollTimeout);
+      }
+
+      // Set a flag that we're currently scrolling
+      isScrolling = true;
+
+      // Only update the domain when scrolling stops
+      scrollTimeout = setTimeout(() => {
+        isScrolling = false;
+        updateVisibleYDomain();
+      }, 150); // Wait 150ms after scrolling stops before updating
+    };
+
+    container.addEventListener("scroll", handleScroll);
+
+    // Clean up
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+      if (scrollTimeout) {
+        clearTimeout(scrollTimeout);
+      }
+    };
+  }, [chartData, autoScaleEnabled]);
+
   // Chart configuration
   const chartConfig = {
     weight: {
@@ -68,6 +250,20 @@ export function WeightChart() {
       color: "#ca9ee6",
     },
   } satisfies ChartConfig;
+
+  // Toggle auto-scaling function
+  const toggleAutoScale = () => {
+    if (autoScaleEnabled) {
+      // Disable auto-scaling and reset to full range
+      setVisibleYDomain(null);
+      setAutoScaleEnabled(false);
+    } else {
+      // Enable auto-scaling and update immediately
+      setAutoScaleEnabled(true);
+      // Delay the update slightly to ensure state is updated
+      setTimeout(updateVisibleYDomain, 50);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -83,92 +279,179 @@ export function WeightChart() {
     );
   }
 
+  console.log(
+    "Rendering chart with",
+    chartData.length,
+    "data points and width",
+    chartWidth,
+  );
+
+  // Function to scroll left
+  const scrollLeft = () => {
+    if (containerRef.current) {
+      containerRef.current.scrollBy({ left: -300, behavior: "smooth" });
+      // Update happens automatically via scroll event listener
+    }
+  };
+
+  // Function to scroll right
+  const scrollRight = () => {
+    if (containerRef.current) {
+      containerRef.current.scrollBy({ left: 300, behavior: "smooth" });
+      // Update happens automatically via scroll event listener
+    }
+  };
+
   return (
     <Card className="bg-card text-card-foreground w-full rounded-lg border border-[var(--ctp-text)]/20 p-6">
-      <CardTitle>Weight History</CardTitle>
-      <CardContent className="h-full min-h-80 overflow-x-auto overflow-y-auto">
-        <ChartContainer config={chartConfig}>
-          <LineChart
-            data={chartData}
-            margin={{ top: 20, right: 30, bottom: 30, left: 30 }}
-            height={500}
+      <CardTitle className="flex items-center justify-between">
+        <span>Weight History</span>
+        <div className="flex items-center gap-2">
+          {chartData.length > DEFAULT_VISIBLE_POINTS && (
+            <>
+              <button
+                onClick={scrollLeft}
+                className="hover:bg-muted rounded-full p-1 transition-colors"
+                aria-label="Scroll left"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <button
+                onClick={scrollRight}
+                className="hover:bg-muted rounded-full p-1 transition-colors"
+                aria-label="Scroll right"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </>
+          )}
+          <button
+            onClick={toggleAutoScale}
+            className={`rounded px-2 py-1 text-xs transition-colors ${
+              autoScaleEnabled
+                ? "bg-[var(--ctp-mauve)] text-white"
+                : "bg-[var(--ctp-surface0)] text-[var(--ctp-text)]"
+            }`}
+            title={
+              autoScaleEnabled ? "Disable auto-scaling" : "Enable auto-scaling"
+            }
           >
-            <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-            <XAxis
-              dataKey="date"
-              tickFormatter={(date: string) => format(date, "MMM d")}
-              tick={{ fill: "#949cbb" }}
-            />
-            <YAxis
-              domain={[
-                Math.min(
-                  minWeight,
-                  bmi30Weight > 0 ? bmi30Weight - 20 : minWeight,
-                ),
-                Math.max(
-                  maxWeight,
-                  bmi35Weight > 0 ? bmi35Weight + 20 : maxWeight,
-                ),
-              ]}
-              tick={{ fill: "#949cbb" }}
-              tickFormatter={(value) => `${value} lbs`}
-              padding={{ top: 20, bottom: 20 }}
-            />
-            <ChartTooltip
-              content={({ active, payload }) => {
-                if (active && payload?.length) {
-                  return (
-                    <ChartTooltipContent
-                      active={active}
-                      payload={payload}
-                      labelFormatter={(_, payload) => {
-                        if (payload[0]) {
-                          return (payload[0].payload as Payload).formattedDate;
-                        }
-                        return "";
-                      }}
-                    />
-                  );
-                }
-                return null;
-              }}
-            />
-            <Line
-              type="monotone"
-              dataKey="weight"
-              name="weight"
-              stroke="#babbf1"
-              strokeWidth={2}
-              dot={{ r: 4 }}
-              activeDot={{ r: 6 }}
-            />
-            {heightInInches > 0 && bmi30Weight > 0 && (
-              <ReferenceLine
-                y={bmi30Weight}
-                stroke="#ef9f76"
-                strokeDasharray="3 3"
-                label={{
-                  value: `BMI 30 (${bmi30Weight} lbs) Class 1`,
-                  position: "insideBottomRight",
-                  fill: "#ef9f76",
-                }}
-              />
-            )}
-            {heightInInches > 0 && bmi35Weight > 0 && (
-              <ReferenceLine
-                y={bmi35Weight}
-                stroke="#e78284"
-                strokeDasharray="3 3"
-                label={{
-                  value: `BMI 35 (${bmi35Weight} lbs) Class 2`,
-                  position: "insideBottomRight",
-                  fill: "#e78284",
-                }}
-              />
-            )}
-            <ChartLegend content={<ChartLegendContent />} />
-          </LineChart>
-        </ChartContainer>
+            {autoScaleEnabled ? "Auto Y" : "Full Y"}
+          </button>
+        </div>
+      </CardTitle>
+      <CardContent
+        className="relative h-full max-h-[80vh] min-h-80 overflow-x-auto overflow-y-hidden"
+        ref={containerRef}
+      >
+        {showScrollHint && (
+          <div className="absolute top-4 right-4 z-10 animate-pulse rounded-md bg-black/70 px-3 py-1 text-xs text-white">
+            Scroll to see more data
+          </div>
+        )}
+        <div style={{ width: `${chartWidth}px`, minWidth: "100%" }}>
+          {chartData.length > 0 && (
+            <ChartContainer config={chartConfig}>
+              <LineChart
+                data={chartData}
+                margin={{ top: 20, right: 30, bottom: 30, left: 30 }}
+                height={CHART_HEIGHT}
+                width={chartWidth}
+                className="recharts-wrapper"
+              >
+                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                <XAxis
+                  dataKey="date"
+                  tickFormatter={(date: string) => format(date, "MMM d")}
+                  tick={{ fill: "#949cbb" }}
+                />
+                <YAxis
+                  domain={
+                    visibleYDomain ?? [
+                      Math.max(
+                        0,
+                        Math.min(
+                          minWeight,
+                          bmi30Weight > 0 ? bmi30Weight - 20 : minWeight,
+                        ),
+                      ),
+                      Math.max(
+                        maxWeight,
+                        bmi35Weight > 0 ? bmi35Weight + 20 : maxWeight,
+                      ),
+                    ]
+                  }
+                  tick={{ fill: "#949cbb" }}
+                  tickFormatter={(value) => `${value} lbs`}
+                  padding={{ top: 20, bottom: 20 }}
+                  width={60}
+                  // Limit the number of ticks to prevent overcrowding
+                  tickCount={7}
+                />
+                <ChartTooltip
+                  content={({ active, payload }) => {
+                    if (active && payload?.length) {
+                      return (
+                        <ChartTooltipContent
+                          active={active}
+                          payload={payload}
+                          labelFormatter={(_, payload) => {
+                            if (payload[0]) {
+                              return (payload[0].payload as Payload)
+                                .formattedDate;
+                            }
+                            return "";
+                          }}
+                        />
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="weight"
+                  name="weight"
+                  stroke="#babbf1"
+                  strokeWidth={2}
+                  dot={chartData.length > 50 ? false : { r: 4 }}
+                  activeDot={{ r: 6 }}
+                  isAnimationActive={false}
+                />
+                {heightInInches > 0 && bmi30Weight > 0 && (
+                  <ReferenceLine
+                    y={bmi30Weight}
+                    stroke="#ef9f76"
+                    strokeDasharray="3 3"
+                    label={{
+                      value: `BMI 30 (${bmi30Weight} lbs) Class 1`,
+                      position: "insideBottomRight",
+                      fill: "#ef9f76",
+                    }}
+                  />
+                )}
+                {heightInInches > 0 && bmi35Weight > 0 && (
+                  <ReferenceLine
+                    y={bmi35Weight}
+                    stroke="#e78284"
+                    strokeDasharray="3 3"
+                    label={{
+                      value: `BMI 35 (${bmi35Weight} lbs) Class 2`,
+                      position: "insideBottomRight",
+                      fill: "#e78284",
+                    }}
+                  />
+                )}
+                <ChartLegend content={<ChartLegendContent />} />
+              </LineChart>
+            </ChartContainer>
+          )}
+          {chartData.length === 0 && (
+            <div className="flex h-80 items-center justify-center">
+              <p>No data to display</p>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
