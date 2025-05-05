@@ -16,32 +16,22 @@ export const dataRouter = createTRPCRouter({
       await ctx.db.insert(data).values({
         weight: input.weight,
         date: input.date.toISOString(),
-        userId: "1",
+        userId: ctx.session.user.id,
       });
     }),
 
   getAll: protectedProcedure
-    .input(
-      z.object({
-        userId: z.string().min(1),
-      }),
-    )
-    .query(async ({ ctx, input }) => {
+    .query(async ({ ctx }) => {
       return ctx.db.query.data.findMany({
-        where: eq(data.userId, input.userId),
+        where: eq(data.userId, ctx.session.user.id),
         orderBy: [desc(data.date)],
       });
     }),
 
   getLatest: protectedProcedure
-    .input(
-      z.object({
-        userId: z.string().min(1),
-      }),
-    )
-    .query(async ({ ctx, input }) => {
+    .query(async ({ ctx }) => {
       return ctx.db.query.data.findFirst({
-        where: eq(data.userId, input.userId),
+        where: eq(data.userId, ctx.session.user.id),
         orderBy: [desc(data.date)],
       });
     }),

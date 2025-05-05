@@ -3,7 +3,7 @@ import { api } from "@/lib/trpc/server";
 import { redirect } from "next/navigation";
 
 export default async function HomePage() {
-  const currentFast = await api.fast.getCurrentFast({ userId: "1" });
+  const currentFast = await api.fast.getCurrentFast();
   if (currentFast) {
     return redirect("/fast");
   }

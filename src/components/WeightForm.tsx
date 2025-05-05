@@ -14,9 +14,7 @@ import { api } from "@/lib/trpc/client";
 import { startOfDay } from "date-fns";
 
 export function WeightForm() {
-  const { data: lastWeight } = api.data.getLatest.useQuery({
-    userId: "1",
-  });
+  const { data: lastWeight } = api.data.getLatest.useQuery();
   const [isOpen, setIsOpen] = useState(false);
   const [weight, setWeight] = useState<string>(lastWeight?.weight.toString() ?? "");
   const [error, setError] = useState<string | null>(null);

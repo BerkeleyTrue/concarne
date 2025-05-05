@@ -49,12 +49,10 @@ const formatDuration = (ms: number) => {
 export default function FastingTracker({
   initFast,
 }: {
-  initFast: Fast | undefined;
+  initFast: Fast | null;
 }) {
   const utils = api.useUtils();
-  const { data: currentFast = initFast } = api.fast.getCurrentFast.useQuery({
-    userId: "1",
-  });
+  const { data: currentFast = initFast } = api.fast.getCurrentFast.useQuery();
   const { mutate: createFast } = api.fast.createFast.useMutation({
     onSuccess: () => {
       // Refetch the current fast after creating
@@ -190,7 +188,6 @@ export default function FastingTracker({
               key={fast.name}
               onClick={() => {
                 createFast({
-                  userId: "1",
                   duration: fast.duration,
                 });
               }}
@@ -230,8 +227,7 @@ export default function FastingTracker({
           <Button
             onClick={() => {
               startFast({
-                id: currentFast.id ?? "000",
-                userId: currentFast.userId,
+                fastId: currentFast.id ?? 0,
                 startTime: new Date().toISOString(),
               });
             }}
@@ -334,8 +330,7 @@ export default function FastingTracker({
               onClick={() => {
                 const endTime = new Date();
                 void endFast({
-                  id: currentFast.id ?? "000",
-                  userId: currentFast.userId,
+                  fastId: currentFast.id ?? 0,
                   endTime: endTime.toISOString(),
                 });
                 setIsCompleted(true);

@@ -19,6 +19,8 @@ export const dynamic = "force-dynamic";
 // export const maxDuration = 60; // Set max duration to 60 seconds
 
 export async function POST(request: NextRequest) {
+  // TODO: Get userId from session
+  const userId = 1;
   try {
     // Get the file data from the request body
     const { file, filename } = (await request.json()) as {
@@ -88,13 +90,13 @@ export async function POST(request: NextRequest) {
           // Check if entry already exists for this date and user
           const existingEntry = await tx.query.data.findFirst({
             where: (fields) =>
-              eq(fields.userId, "1") && eq(fields.date, item.date),
+              eq(fields.userId, userId) && eq(fields.date, item.date),
           });
 
           if (!existingEntry) {
             // Insert new entry
             await tx.insert(data).values({
-              userId: "1",
+              userId,
               weight: item.weight,
               date: item.date,
             });

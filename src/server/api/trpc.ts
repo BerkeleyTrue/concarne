@@ -37,8 +37,13 @@ import { db } from "@/server/db";
  */
 const createInnerTRPCContext = (opts: { headers: Headers }) => {
   return {
-    db,
     ...opts,
+    db,
+    session: {
+      user: {
+        id: 1,
+      },
+    },
   };
 };
 

@@ -8,13 +8,12 @@ export const fastRouter = createTRPCRouter({
   createFast: protectedProcedure
     .input(
       z.object({
-        userId: z.string().min(1),
         duration: z.number().int().positive(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       await ctx.db.insert(fasts).values({
-        userId: "1",
+        userId: ctx.session.user.id,
         targetHours: input.duration,
         fastType: "16:8 INTERMITTENT",
       });
@@ -23,8 +22,7 @@ export const fastRouter = createTRPCRouter({
   startFast: protectedProcedure
     .input(
       z.object({
-        id: z.string().min(1),
-        userId: z.string().min(1),
+        fastId: z.number().int().positive(),
         startTime: z.string(),
       }),
     )
@@ -34,14 +32,18 @@ export const fastRouter = createTRPCRouter({
         .set({
           startTime: input.startTime,
         })
-        .where(eq(fasts.id, input.id));
+        .where(
+          and(
+            eq(fasts.id, input.fastId),
+            eq(fasts.userId, ctx.session.user.id),
+          ),
+        );
     }),
 
   endFast: protectedProcedure
     .input(
       z.object({
-        id: z.string().min(1),
-        userId: z.string().min(1),
+        fastId: z.number().int().positive(),
         endTime: z.string(),
       }),
     )
@@ -51,20 +53,19 @@ export const fastRouter = createTRPCRouter({
         .set({
           endTime: input.endTime,
         })
-        .where(eq(fasts.id, input.id));
+        .where(
+          and(
+            eq(fasts.userId, ctx.session.user.id),
+            eq(fasts.id, input.fastId),
+          ),
+        );
     }),
 
-  getCurrentFast: protectedProcedure
-    .input(
-      z.object({
-        userId: z.string().min(1),
-      }),
-    )
-    .query(async ({ ctx, input }) => {
-      const res = await ctx.db.query.fasts.findFirst({
-        where: and(eq(fasts.userId, input.userId), isNull(fasts.endTime)),
-        orderBy: [desc(fasts.startTime)],
-      });
-      return res ?? null;
-    }),
+  getCurrentFast: protectedProcedure.query(async ({ ctx }) => {
+    const res = await ctx.db.query.fasts.findFirst({
+      where: and(eq(fasts.userId, ctx.session.user.id), isNull(fasts.endTime)),
+      orderBy: [desc(fasts.startTime)],
+    });
+    return res ?? null;
+  }),
 });

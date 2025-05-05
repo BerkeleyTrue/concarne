@@ -34,12 +34,8 @@ const CHART_HEIGHT = 400; // Fixed height for the chart
 const MAX_CHART_WIDTH = 2000; // Maximum chart width to prevent rendering issues
 
 export function WeightChart() {
-  const { data = [], isLoading } = api.data.getAll.useQuery({
-    userId: "1",
-  });
-  const { data: user } = api.auth.getUser.useQuery({
-    userId: "1",
-  });
+  const { data = [], isLoading } = api.data.getAll.useQuery();
+  const { data: user } = api.auth.getUser.useQuery();
   const containerRef = useRef<HTMLDivElement>(null);
   const [showScrollHint, setShowScrollHint] = useState(false);
   // Initialize with a default domain instead of null

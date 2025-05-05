@@ -5,9 +5,7 @@ import { api } from "@/lib/trpc/client";
 
 export function UserInfoCard() {
   const { data: userData, isLoading: isUserLoading } =
-    api.auth.getUser.useQuery({
-      userId: "1",
-    });
+    api.auth.getUser.useQuery();
   return (
     <Card className="bg-card w-full max-w-md rounded-lg border p-6 text-white shadow-md">
       <CardHeader>User Profile</CardHeader>
@@ -30,10 +28,7 @@ export function UserInfoCard() {
                     ? `${Math.floor(userData.height / 12)}' ${userData.height % 12}"`
                     : "Not provided"}
                 </span>
-                <HeightForm
-                  userId={userData.id}
-                  currentHeight={userData.height ?? undefined}
-                />
+                <HeightForm currentHeight={userData.height ?? undefined} />
               </div>
             </div>
             <div className="flex items-center justify-between">

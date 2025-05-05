@@ -12,12 +12,8 @@ import type { z } from "zod";
 export const createTable = sqliteTableCreator((name) => `concarne_${name}`);
 
 export const users = createTable("user", (d) => ({
-  id: d
-    .text({ length: 255 })
-    .notNull()
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  username: d.text({ length: 255 }),
+  id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
+  username: d.text({ length: 255 }).notNull(),
   password: d.text({ length: 255 }),
   height: d.integer(),
 }));
@@ -35,7 +31,7 @@ export const data = createTable(
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
     userId: d
-      .text({ length: 255 })
+      .integer({ mode: "number" })
       .notNull()
       .references(() => users.id),
     weight: d.integer().notNull(),
@@ -58,13 +54,9 @@ export const dataRelations = relations(data, ({ one }) => ({
 export const fasts = createTable(
   "fasts",
   (d) => ({
-    id: d
-      .text({ length: 255 })
-      .notNull()
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+    id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
     userId: d
-      .text({ length: 255 })
+      .integer({ mode: "number" })
       .notNull()
       .references(() => users.id),
     startTime: d.text(), // Start time as ISO string (e.g., "2023-04-24T12:00:00.000Z"), null for unstarted

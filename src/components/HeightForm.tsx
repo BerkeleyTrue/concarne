@@ -14,13 +14,7 @@ import {
 import { Pencil } from "lucide-react";
 import { api } from "@/lib/trpc/client";
 
-export function HeightForm({
-  userId,
-  currentHeight,
-}: {
-  userId: string;
-  currentHeight?: number;
-}) {
+export function HeightForm({ currentHeight }: { currentHeight?: number }) {
   const [isOpen, setIsOpen] = useState(false);
   const [feet, setFeet] = useState(
     currentHeight ? Math.floor(currentHeight / 12).toString() : "5",
@@ -38,7 +32,7 @@ export function HeightForm({
       toast.success("Height updated successfully!");
       setIsSubmitting(false);
       setIsOpen(false);
-      void utils.auth.getUser.invalidate({ userId });
+      void utils.auth.getUser.invalidate();
     },
     onError: (error) => {
       toast.error(error.message ?? "Failed to update height");
@@ -105,7 +99,6 @@ export function HeightForm({
 
     setIsSubmitting(true);
     updateHeightMutation.mutate({
-      userId,
       height: totalInches,
     });
   };

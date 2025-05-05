@@ -38,6 +38,7 @@ export const authRouter = createTRPCRouter({
       const res = await db
         .insert(users)
         .values({
+          id: 1,
           username,
           password: passwordHash,
         })
@@ -49,32 +50,26 @@ export const authRouter = createTRPCRouter({
       return res[0];
     }),
   getUser: protectedProcedure
-    .input(
-      z.object({
-        userId: z.string().min(1),
-      }),
-    )
-    .query(async ({ input }) => {
-      const userId = input.userId;
+    .query(async ({ ctx }) => {
       const user = await db.query.users.findFirst({
-        where: eq(users.id, userId),
+        where: eq(users.id, ctx.session.user.id),
       });
 
-      return user;
+      return user ?? null;
     }),
+
   updateUserHeight: protectedProcedure
     .input(
       z.object({
-        userId: z.string().min(1),
         height: z.number().min(1).max(108),
       }),
     )
-    .mutation(async ({ input }) => {
-      const { userId, height } = input;
+    .mutation(async ({ input, ctx }) => {
+      const { height } = input;
 
       // Check if user exists
       const existingUser = await db.query.users.findFirst({
-        where: eq(users.id, userId),
+        where: eq(users.id, ctx.session.user.id),
       });
 
       if (!existingUser) {
@@ -84,19 +79,11 @@ export const authRouter = createTRPCRouter({
         });
       }
 
-      // Verify the current user has permission to update this user
-      // if (ctx.session.user.id !== userId) {
-      //   throw new TRPCError({
-      //     code: "FORBIDDEN",
-      //     message: "You can only update your own height",
-      //   });
-      // }
-
       // Update the user's height
       const updatedUser = await db
         .update(users)
         .set({ height })
-        .where(eq(users.id, userId))
+        .where(eq(users.id, ctx.session.user.id))
         .returning({
           id: users.id,
           username: users.username,
