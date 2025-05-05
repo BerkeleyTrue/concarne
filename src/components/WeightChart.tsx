@@ -17,9 +17,20 @@ import {
   ReferenceLine,
 } from "recharts";
 import { format } from "date-fns";
-import { Card, CardContent, CardTitle } from "./ui/card";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
 import { api } from "@/lib/trpc/client";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "./ui/button";
+import Link from "next/link";
+import { WeightForm } from "./WeightForm";
 
 type Payload = {
   date: Date;
@@ -256,27 +267,6 @@ export function WeightChart() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="h-80 w-full animate-pulse rounded-lg bg-white/5"></div>
-    );
-  }
-
-  if (chartData.length === 0) {
-    return (
-      <div className="bg-card text-card-foreground flex h-80 w-full items-center justify-center border border-[var(--ctp-text)]/20 p-6">
-        <p>No weight data available. Add your weight to see the chart.</p>
-      </div>
-    );
-  }
-
-  console.log(
-    "Rendering chart with",
-    chartData.length,
-    "data points and width",
-    chartWidth,
-  );
-
   // Function to scroll left
   const scrollLeft = () => {
     if (containerRef.current) {
@@ -294,10 +284,29 @@ export function WeightChart() {
   };
 
   return (
-    <Card className="bg-card text-card-foreground w-full rounded-lg border border-[var(--ctp-text)]/20 p-6">
-      <CardTitle className="flex items-center justify-between">
-        <span>Weight History</span>
-        <div className="flex items-center gap-2">
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="">Weight History</CardTitle>
+        <CardDescription>
+          {isLoading ? (
+            <p>Loading...</p>
+          ) : chartData.length == 0 ? (
+            <p>No data available</p>
+          ) : (
+            <p>
+              {chartData.length} data points over{" "}
+              {chartData.length > 0
+                ? Math.round(
+                    (chartData?.[0]?.date?.getTime() ??
+                      0 - (chartData.at(-1)?.date?.getTime() ?? 0)) /
+                      (1000 * 60 * 60 * 24),
+                  )
+                : 0}{" "}
+              days
+            </p>
+          )}
+        </CardDescription>
+        <CardAction>
           {chartData.length > DEFAULT_VISIBLE_POINTS && (
             <>
               <button
@@ -329,8 +338,9 @@ export function WeightChart() {
           >
             {autoScaleEnabled ? "Auto Y" : "Full Y"}
           </button>
-        </div>
-      </CardTitle>
+        </CardAction>
+      </CardHeader>
+
       <CardContent
         className="relative h-full max-h-[80vh] min-h-80 overflow-x-auto overflow-y-hidden"
         ref={containerRef}
@@ -449,6 +459,13 @@ export function WeightChart() {
           )}
         </div>
       </CardContent>
+
+      <CardFooter className="border-t justify-end">
+        <Button asChild={true} variant="destructive" className="mr-4">
+          <Link href="/weight/backup">Backup</Link>
+        </Button>
+        <WeightForm />
+      </CardFooter>
     </Card>
   );
 }

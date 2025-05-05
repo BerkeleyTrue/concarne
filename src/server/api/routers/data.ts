@@ -13,26 +13,33 @@ export const dataRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      await ctx.db.insert(data).values({
-        weight: input.weight,
-        date: input.date.toISOString(),
-        userId: ctx.session.user.id,
-      });
+      const res = await ctx.db
+        .insert(data)
+        .values({
+          weight: input.weight,
+          date: input.date.toISOString(),
+          userId: ctx.session.user.id,
+        })
+        .returning();
+
+      return res[0] ?? null;
     }),
 
-  getAll: protectedProcedure
-    .query(async ({ ctx }) => {
-      return ctx.db.query.data.findMany({
-        where: eq(data.userId, ctx.session.user.id),
-        orderBy: [desc(data.date)],
-      });
-    }),
+  getAll: protectedProcedure.query(async ({ ctx }) => {
+    const res = await ctx.db.query.data.findMany({
+      where: eq(data.userId, ctx.session.user.id),
+      orderBy: [desc(data.date)],
+    });
 
-  getLatest: protectedProcedure
-    .query(async ({ ctx }) => {
-      return ctx.db.query.data.findFirst({
-        where: eq(data.userId, ctx.session.user.id),
-        orderBy: [desc(data.date)],
-      });
-    }),
+    return res;
+  }),
+
+  getLatest: protectedProcedure.query(async ({ ctx }) => {
+    const res = await ctx.db.query.data.findFirst({
+      where: eq(data.userId, ctx.session.user.id),
+      orderBy: [desc(data.date)],
+    });
+
+    return res ?? null;
+  }),
 });

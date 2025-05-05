@@ -54,7 +54,7 @@ export default function RootLayout({
                 "bg-[var(--ctp-surface1)] md:rounded-xl md:shadow",
               )}
             >
-              <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
+              <div className="container flex flex-col items-center justify-center gap-12 px-2 md:px-4 py-16">
                 {children}
               </div>
             </main>
