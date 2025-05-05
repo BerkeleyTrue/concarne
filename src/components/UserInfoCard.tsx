@@ -2,6 +2,8 @@
 import { HeightForm } from "@/components/HeightForm";
 import { Card, CardContent, CardHeader } from "./ui/card";
 import { api } from "@/lib/trpc/client";
+import Link from "next/link";
+import { Button } from "./ui/button";
 
 export function UserInfoCard() {
   const { data: userData, isLoading: isUserLoading } =
@@ -37,7 +39,12 @@ export function UserInfoCard() {
             </div>
           </div>
         ) : (
-          <p>No user information available</p>
+          <div className="flex items-center justify-between">
+            <p>No user information available</p>
+            <Link href="/auth">
+              <Button variant="outline">Login</Button>
+            </Link>
+          </div>
         )}
       </CardContent>
     </Card>
