@@ -4,9 +4,8 @@ import * as React from "react";
 import * as RechartsPrimitive from "recharts";
 
 import { cn } from "@/lib/utils";
+import type { NameType, Payload, ValueType } from "recharts/types/component/DefaultTooltipContent";
 
-// Format: { THEME_NAME: CSS_SELECTOR }
-const THEMES = { light: "", dark: ".dark" } as const;
 
 export type ChartConfig = Record<
   string,
@@ -175,7 +174,7 @@ function ChartTooltipContent({
         {payload.map((item, index) => {
           const key = `${nameKey ?? item.name ?? item.dataKey ?? "value"}`;
           const itemConfig = getPayloadConfigFromPayload(config, item, key);
-          const indicatorColor = color ?? item.payload.fill ?? item.color; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+          const indicatorColor = (color ?? item.payload.fill ?? item.color) as string; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
 
           return (
             <div
@@ -186,7 +185,7 @@ function ChartTooltipContent({
               )}
             >
               {formatter && item?.value !== undefined && item.name ? (
-                formatter(item.value, item.name, item, index, item.payload)
+                formatter(item.value, item.name, item, index, item.payload as Payload<ValueType, NameType>[])
               ) : (
                 <>
                   {itemConfig?.icon ? (
@@ -269,12 +268,12 @@ function ChartLegendContent({
       )}
     >
       {payload.map((item) => {
-        const key = `${nameKey ?? item.dataKey ?? "value"}`;
+        const key = `${(nameKey ?? item.dataKey) as string ?? "value"}`;
         const itemConfig = getPayloadConfigFromPayload(config, item, key);
 
         return (
           <div
-            key={item.value}
+            key={item.value as string}
             className={cn(
               "[&>svg]:text-muted-foreground flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3",
             )}
