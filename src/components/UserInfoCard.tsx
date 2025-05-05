@@ -1,6 +1,12 @@
 "use client";
 import { HeightForm } from "@/components/HeightForm";
-import { Card, CardContent, CardHeader } from "./ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
 import { api } from "@/lib/trpc/client";
 import Link from "next/link";
 import { Button } from "./ui/button";
@@ -9,8 +15,13 @@ export function UserInfoCard() {
   const { data: userData, isLoading: isUserLoading } =
     api.auth.getUser.useQuery();
   return (
-    <Card className="bg-card w-full max-w-md rounded-lg border p-6 text-white shadow-md">
-      <CardHeader>User Profile</CardHeader>
+    <Card className="w-full max-w-md p-2 md:p-6">
+      <CardHeader>
+        <CardTitle>User Profile</CardTitle>
+        <CardDescription>
+          View and update your profile information
+        </CardDescription>
+      </CardHeader>
       <CardContent>
         {isUserLoading ? (
           <p>Loading user information...</p>

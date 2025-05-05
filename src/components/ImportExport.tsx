@@ -5,7 +5,15 @@ import { Upload, FileUp, AlertCircle, Check, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardTitle } from "./ui/card";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/trpc/client";
 import { toast } from "sonner";
@@ -130,13 +138,23 @@ export const ImportExport = () => {
 
   return (
     <Card className="w-full max-w-2xl">
-      <CardTitle>
-        <Button variant="ghost" size="sm" onClick={handleBack} className="mr-2">
-          <ChevronLeft className="h-4 w-4" />
-          Back
-        </Button>
-        <h2 className="text-2xl font-bold">Import/Export Data</h2>
-      </CardTitle>
+      <CardHeader>
+        <CardTitle>Import/Export Data</CardTitle>
+        <CardDescription>
+          Upload a CSV file to import data or export existing data.
+        </CardDescription>
+        <CardAction>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBack}
+            className="mr-2"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Back
+          </Button>
+        </CardAction>
+      </CardHeader>
 
       <CardContent>
         {/* File Upload Area */}
@@ -209,19 +227,17 @@ export const ImportExport = () => {
           </div>
         )}
       </CardContent>
-      <CardFooter>
+      <CardFooter className="mb-4 justify-between">
         {/* Export Button */}
-        <div className="mb-4 flex w-full justify-between">
-          <Button
-            variant="secondary"
-            onClick={() => {
-              // This would be implemented to handle the export action
-              console.log("Export data");
-            }}
-          >
-            Export Data
-          </Button>
-        </div>
+        <Button
+          variant="secondary"
+          onClick={() => {
+            // This would be implemented to handle the export action
+            console.log("Export data");
+          }}
+        >
+          Export Data
+        </Button>
       </CardFooter>
     </Card>
   );

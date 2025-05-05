@@ -3,7 +3,14 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { Edit } from "lucide-react";
-import { Card, CardContent, CardTitle } from "./ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { api } from "@/lib/trpc/client";
@@ -158,22 +165,23 @@ export default function FastingTracker({
     return () => clearInterval(intervalId);
   }, [currentFast, endTime]);
 
-
   const formatDateTime = (dateString: string | null | undefined) => {
     if (!dateString) return "";
-    
+
     const date = new Date(dateString);
     const now = new Date();
-    
-    // Use date-fns format for consistent formatting
-    if (format(date, 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd')) {
-      return `Today, ${format(date, 'h:mm a')}`;
-    } else if (format(date, 'yyyy-MM-dd') === format(new Date(now.setDate(now.getDate() - 1)), 'yyyy-MM-dd')) {
-      return `Yesterday, ${format(date, 'h:mm a')}`;
-    } else {
-      return format(date, 'MMM d, h:mm a');
-    }
 
+    // Use date-fns format for consistent formatting
+    if (format(date, "yyyy-MM-dd") === format(now, "yyyy-MM-dd")) {
+      return `Today, ${format(date, "h:mm a")}`;
+    } else if (
+      format(date, "yyyy-MM-dd") ===
+      format(new Date(now.setDate(now.getDate() - 1)), "yyyy-MM-dd")
+    ) {
+      return `Yesterday, ${format(date, "h:mm a")}`;
+    } else {
+      return format(date, "MMM d, h:mm a");
+    }
   };
 
   // This would normally be connected to a timer logic
@@ -242,17 +250,18 @@ export default function FastingTracker({
 
   return (
     <Card>
-      <CardTitle>
-        {isCompleted ? "Fast Completed!" : "You're fasting!"}
-      </CardTitle>
-
-      <CardContent>
-        <div className="flex items-center justify-center">
+      <CardHeader >
+        <CardTitle className="text-center">
+          {isCompleted ? "Fast Completed!" : "You're fasting!"}
+        </CardTitle>
+        <CardDescription className="flex justify-center">
           <Badge className="px-4">
             {currentFast.fastType || `${currentFast.targetHours}-HOUR FAST`}
           </Badge>
-        </div>
+        </CardDescription>
+      </CardHeader>
 
+      <CardContent>
         <div className="relative my-4 flex h-64 w-64 items-center justify-center">
           {/* Progress Circle */}
           <svg className="h-full w-full" viewBox="0 0 100 100">
@@ -341,35 +350,34 @@ export default function FastingTracker({
             </Button>
           )}
         </div>
-
-        <div className="mt-2 flex w-full justify-between gap-2 px-2 text-xs text-[#b5bfe2]">
-          <div>
-            <div className="uppercase">Started fasting</div>
-            <div className="mt-1 flex items-center text-[#f9e2af]">
-              <span>{formatDateTime(currentFast.startTime)}</span>
-              {!isCompleted && <Edit className="ml-1 h-3 w-3" />}
-            </div>
-          </div>
-
-          <div className="text-right">
-            <div className="uppercase">
-              {isCompleted ? "Ended fasting" : "Fast ending"}
-            </div>
-            <div className="mt-1 text-[#c6d0f5]">
-              {endTime
-                ? formatDateTime(endTime.toISOString())
-                : currentFast.startTime
-                  ? formatDateTime(
-                      new Date(
-                        new Date(currentFast.startTime).getTime() +
-                          currentFast.targetHours * 60 * 60 * 1000,
-                      ).toISOString(),
-                    )
-                  : "Not started"}
-            </div>
+      </CardContent>
+      <CardFooter className="mt-2 justify-between gap-2 px-2 text-xs text-[#b5bfe2]">
+        <div>
+          <div className="uppercase">Started fasting</div>
+          <div className="mt-1 flex items-center text-[#f9e2af]">
+            <span>{formatDateTime(currentFast.startTime)}</span>
+            {!isCompleted && <Edit className="ml-1 h-3 w-3" />}
           </div>
         </div>
-      </CardContent>
+
+        <div className="text-right">
+          <div className="uppercase">
+            {isCompleted ? "Ended fasting" : "Fast ending"}
+          </div>
+          <div className="mt-1 text-[#c6d0f5]">
+            {endTime
+              ? formatDateTime(endTime.toISOString())
+              : currentFast.startTime
+                ? formatDateTime(
+                    new Date(
+                      new Date(currentFast.startTime).getTime() +
+                        currentFast.targetHours * 60 * 60 * 1000,
+                    ).toISOString(),
+                  )
+                : "Not started"}
+          </div>
+        </div>
+      </CardFooter>
     </Card>
   );
 }
