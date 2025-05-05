@@ -7,8 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardTitle } from "./ui/card";
 import { useRouter } from "next/navigation";
+import { api } from "@/lib/trpc/client";
+import { toast } from "sonner";
 
 export const ImportExport = () => {
+  const utils = api.useUtils();
   const router = useRouter();
   const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -102,7 +105,8 @@ export const ImportExport = () => {
             if (data.success) {
               setIsUploaded(true);
               setRowCount(data.rowCount ?? 0);
-              console.log(`Uploaded ${data.rowCount} rows successfully`);
+              toast.success("File uploaded successfully!");
+              void utils.data.getAll.invalidate();
             } else {
               setError(data.error ?? "Failed to upload file");
             }
