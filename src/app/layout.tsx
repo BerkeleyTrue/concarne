@@ -1,15 +1,30 @@
 import { Toaster } from "@/components/ui/sonner";
 import { NavBar } from "@/components/NavBar";
 import type { ReactNode } from "react";
-import { Fira_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "@/styles/globals.css";
 import { Providers } from "./providers";
 import type { Metadata } from "next";
 import { cn } from "@/lib/utils";
 
-const font = Fira_Mono({
-  weight: ["400", "500", "700"],
-  subsets: ["latin"],
+const font = localFont({
+  src: [
+    {
+      path: "./fonts/FiraCode-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "./fonts/FiraCode-Medium.ttf",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "./fonts/FiraCode-Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+  ],
 });
 
 export const metadata: Metadata = {
