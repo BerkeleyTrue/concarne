@@ -20,7 +20,7 @@
         pnpm = pkgs.pnpm_10;
 
         # Project name from package.json
-        name = "tiab";
+        name = "concarne";
       in
       {
         # Package definition
