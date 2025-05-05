@@ -51,7 +51,13 @@ export const NavBar = () => {
       </div>
 
       {/* Desktop Sidebar */}
-      <div className="fixed top-0 left-0 z-50 hidden h-full w-16 flex-col items-center border-r border-[var(--border)] bg-[var(--card)] py-8 md:flex">
+      <div
+        className={cn(
+          "hidden flex-col items-center md:flex",
+          "h-dvh w-24",
+          "py-8",
+        )}
+      >
         {navItems.map((item) => (
           <Link
             key={item.label}

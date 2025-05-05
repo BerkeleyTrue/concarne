@@ -29,9 +29,16 @@ export default function RootLayout({
     <html lang="en">
       <body className={cn(font.className, "antialiased")}>
         <Providers>
-          <div className="flex min-h-dvh bg-gradient-to-b from-[var(--ctp-base)] to-[var(--ctp-lavender)]">
+          <div className="flex w-dvw h-dvh bg-gradient-to-b from-[var(--ctp-base)] to-[var(--ctp-lavender)]">
             <NavBar />
-            <main className="flex w-full flex-col items-center justify-center pb-16 md:pb-0 md:pl-16">
+            <main
+              className={cn(
+                "flex flex-col items-center justify-center",
+                "w-full md:w-[calc(100%-calc(var(--spacing)*24))]",
+                "pb-16 md:m-2 md:pb-0",
+                "bg-[var(--ctp-surface1)] md:rounded-xl md:shadow",
+              )}
+            >
               <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
                 {children}
               </div>
