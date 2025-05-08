@@ -15,6 +15,7 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { api } from "@/lib/trpc/client";
 import type { Fast } from "@/server/db/schema";
+import { toast } from "sonner";
 
 // duration in hours
 const fastTypes = [
@@ -60,19 +61,38 @@ export default function FastingTracker({
 }) {
   const utils = api.useUtils();
   const { data: currentFast = initFast } = api.fast.getCurrentFast.useQuery();
+
   const { mutate: createFast } = api.fast.createFast.useMutation({
     onSuccess: () => {
       // Refetch the current fast after creating
       void utils.fast.getCurrentFast.invalidate();
     },
+    onError: (error) => {
+      console.error("Error creating fast:", error);
+      toast.error("Failed to create fast. Please try again.");
+    },
   });
-  const { mutate: startFast } = api.fast.startFast.useMutation({
+
+  const startFast = api.fast.startFast.useMutation({
     onSuccess: () => {
       // Refetch the current fast after starting
       void utils.fast.getCurrentFast.invalidate();
     },
+    onError: (error) => {
+      console.error("Error starting fast:", error);
+      toast.error("Failed to start fast. Please try again.");
+    },
   });
-  const { mutate: endFast } = api.fast.endFast.useMutation();
+
+  const endFast = api.fast.endFast.useMutation({
+    onSuccess: () => {
+      toast.success("Fast ended successfully!");
+    },
+    onError: (error) => {
+      console.error("Error ending fast:", error);
+      toast.error("Failed to end fast. Please try again.");
+    },
+  });
 
   // Check if fast is completed
   const [isCompleted, setIsCompleted] = useState(false);
@@ -153,10 +173,8 @@ export default function FastingTracker({
       const totalDurationMs = currentFast.targetHours * 60 * 60 * 1000;
       const totalProgress = Math.round((elapsedMs / totalDurationMs) * 100);
 
-      const progress = Math.min( 100, totalProgress);
-      const overProgress = Math.max( 0,
-        totalProgress - 100,
-      );
+      const progress = Math.min(100, totalProgress);
+      const overProgress = Math.max(0, totalProgress - 100);
 
       setTimeState({
         elapsedTime: formatDuration(elapsedMs),
@@ -241,8 +259,9 @@ export default function FastingTracker({
         </CardContent>
         <CardFooter>
           <Button
+            disabled={startFast.isPending}
             onClick={() => {
-              startFast({
+              startFast.mutate({
                 fastId: currentFast.id ?? 0,
                 startTime: new Date().toISOString(),
               });
@@ -360,9 +379,10 @@ export default function FastingTracker({
           ) : (
             <Button
               variant="outline"
+              disabled={endFast.isPending}
               onClick={() => {
                 const endTime = new Date();
-                void endFast({
+                endFast.mutate({
                   fastId: currentFast.id ?? 0,
                   endTime: endTime.toISOString(),
                 });
