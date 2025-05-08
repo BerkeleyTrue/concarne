@@ -84,6 +84,7 @@ export default function FastingTracker({
         remainingTime: "0:00:00",
         elapsedTime: "0:00:00",
         progress: 0,
+        overProgress: 0,
         elapsedPercent: 0,
         remainingPercent: 100,
       };
@@ -96,10 +97,10 @@ export default function FastingTracker({
     const elapsedMs = now.getTime() - startTime.getTime();
     const remainingMs = Math.max(0, targetEndTime.getTime() - now.getTime());
     const totalDurationMs = currentFast.targetHours * 60 * 60 * 1000;
-    const progress = Math.min(
-      100,
-      Math.round((elapsedMs / totalDurationMs) * 100),
-    );
+    const totalProgress = Math.round((elapsedMs / totalDurationMs) * 100);
+    const progress = Math.min(100, totalProgress);
+
+    const overProgress = Math.max(0, totalProgress - 100);
 
     return {
       elapsedTime: formatDuration(elapsedMs),
@@ -107,6 +108,7 @@ export default function FastingTracker({
       progress: progress,
       elapsedPercent: progress,
       remainingPercent: 100 - progress,
+      overProgress,
     };
   });
 
@@ -140,6 +142,7 @@ export default function FastingTracker({
           progress: progress,
           elapsedPercent: progress,
           remainingPercent: 0,
+          overProgress: 0,
         });
         return;
       }
@@ -148,9 +151,11 @@ export default function FastingTracker({
       const elapsedMs = now.getTime() - startTime.getTime();
       const remainingMs = Math.max(0, targetEndTime.getTime() - now.getTime());
       const totalDurationMs = currentFast.targetHours * 60 * 60 * 1000;
-      const progress = Math.min(
-        100,
-        Math.round((elapsedMs / totalDurationMs) * 100),
+      const totalProgress = Math.round((elapsedMs / totalDurationMs) * 100);
+
+      const progress = Math.min( 100, totalProgress);
+      const overProgress = Math.max( 0,
+        totalProgress - 100,
       );
 
       setTimeState({
@@ -159,6 +164,7 @@ export default function FastingTracker({
         progress: progress,
         elapsedPercent: progress,
         remainingPercent: 100 - progress,
+        overProgress,
       });
     }, 500);
 
@@ -216,9 +222,10 @@ export default function FastingTracker({
 
     return (
       <Card>
-        <CardContent className="flex flex-col items-center gap-4 pt-6">
+        <CardHeader>
           <CardTitle>Ready to Begin Your Fast</CardTitle>
-
+        </CardHeader>
+        <CardContent className="flex flex-col items-center gap-4 pt-6">
           <Badge className="px-4">
             {selectedFastType?.name ?? `${currentFast.targetHours}-HOUR FAST`}
           </Badge>
@@ -231,7 +238,8 @@ export default function FastingTracker({
               Click the button below when you&apos;re ready to start.
             </p>
           </div>
-
+        </CardContent>
+        <CardFooter>
           <Button
             onClick={() => {
               startFast({
@@ -243,14 +251,14 @@ export default function FastingTracker({
           >
             Start Fasting Now
           </Button>
-        </CardContent>
+        </CardFooter>
       </Card>
     );
   }
 
   return (
     <Card>
-      <CardHeader >
+      <CardHeader>
         <CardTitle className="text-center">
           {isCompleted ? "Fast Completed!" : "You're fasting!"}
         </CardTitle>
@@ -262,7 +270,7 @@ export default function FastingTracker({
       </CardHeader>
 
       <CardContent>
-        <div className="relative my-4 flex h-64 w-64 items-center justify-center">
+        <div className="relative my-4 flex size-64 items-center justify-center md:size-72">
           {/* Progress Circle */}
           <svg className="h-full w-full" viewBox="0 0 100 100">
             {/* Background Circle */}
@@ -288,6 +296,22 @@ export default function FastingTracker({
               strokeDashoffset={282.7 - (282.7 * timeState.progress) / 100}
               transform="rotate(-90 50 50)"
             />
+
+            {/* overprogress arc */}
+            {timeState.overProgress > 0 && (
+              <circle
+                cx="50"
+                cy="50"
+                r="45"
+                fill="none"
+                stroke={"#ea999c"}
+                strokeWidth="10"
+                strokeLinecap="round"
+                strokeDasharray="282.7"
+                strokeDashoffset={(282.7 * timeState.overProgress) / 100}
+                transform="rotate(-90 50 50)"
+              />
+            )}
           </svg>
 
           {/* Center Text */}
