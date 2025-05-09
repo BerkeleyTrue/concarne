@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { format } from "date-fns";
 import { Edit } from "lucide-react";
 import {
@@ -16,6 +16,8 @@ import { Button } from "./ui/button";
 import { api } from "@/lib/trpc/client";
 import type { Fast } from "@/server/db/schema";
 import { toast } from "sonner";
+import { useBoolean } from "@/hooks/use-boolean";
+import { UpdateStart } from "./fasting/update-start";
 
 // duration in hours
 const fastTypes = [
@@ -54,6 +56,25 @@ const formatDuration = (ms: number) => {
   return `${hours}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
 };
 
+const formatDateTime = (dateString: string | null | undefined) => {
+  if (!dateString) return "";
+
+  const date = new Date(dateString);
+  const now = new Date();
+
+  // Use date-fns format for consistent formatting
+  if (format(date, "yyyy-MM-dd") === format(now, "yyyy-MM-dd")) {
+    return `Today, ${format(date, "h:mm a")}`;
+  } else if (
+    format(date, "yyyy-MM-dd") ===
+    format(new Date(now.setDate(now.getDate() - 1)), "yyyy-MM-dd")
+  ) {
+    return `Yesterday, ${format(date, "h:mm a")}`;
+  } else {
+    return format(date, "MMM d, h:mm a");
+  }
+};
+
 export default function FastingTracker({
   initFast,
 }: {
@@ -61,6 +82,11 @@ export default function FastingTracker({
 }) {
   const utils = api.useUtils();
   const { data: currentFast = initFast } = api.fast.getCurrentFast.useQuery();
+  const {
+    value: isUpdatefastOpen,
+    setTrue: openUpdateFast,
+    setFalse: closeUpateFast,
+  } = useBoolean(false);
 
   const { mutate: createFast } = api.fast.createFast.useMutation({
     onSuccess: () => {
@@ -189,24 +215,10 @@ export default function FastingTracker({
     return () => clearInterval(intervalId);
   }, [currentFast, endTime]);
 
-  const formatDateTime = (dateString: string | null | undefined) => {
-    if (!dateString) return "";
-
-    const date = new Date(dateString);
-    const now = new Date();
-
-    // Use date-fns format for consistent formatting
-    if (format(date, "yyyy-MM-dd") === format(now, "yyyy-MM-dd")) {
-      return `Today, ${format(date, "h:mm a")}`;
-    } else if (
-      format(date, "yyyy-MM-dd") ===
-      format(new Date(now.setDate(now.getDate() - 1)), "yyyy-MM-dd")
-    ) {
-      return `Yesterday, ${format(date, "h:mm a")}`;
-    } else {
-      return format(date, "MMM d, h:mm a");
-    }
-  };
+  const handleUpdateStart = useCallback(() => {
+    closeUpateFast();
+    void utils.fast.getCurrentFast.invalidate();
+  }, [closeUpateFast, utils.fast.getCurrentFast]);
 
   // This would normally be connected to a timer logic
   // but for demo purposes we're keeping it static
@@ -257,7 +269,7 @@ export default function FastingTracker({
             </p>
           </div>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="justify-center">
           <Button
             disabled={startFast.isPending}
             onClick={() => {
@@ -400,7 +412,11 @@ export default function FastingTracker({
           <div className="uppercase">Started fasting</div>
           <div className="mt-1 flex items-center text-[#f9e2af]">
             <span>{formatDateTime(currentFast.startTime)}</span>
-            {!isCompleted && <Edit className="ml-1 h-3 w-3" />}
+            {!isCompleted && (
+              <Button variant="link" onClick={openUpdateFast}>
+                <Edit className="ml-1 h-3 w-3" />
+              </Button>
+            )}
           </div>
         </div>
 
@@ -422,6 +438,15 @@ export default function FastingTracker({
           </div>
         </div>
       </CardFooter>
+      {currentFast.startTime && (
+        <UpdateStart
+          fastId={currentFast.id ?? 0}
+          isOpen={isUpdatefastOpen}
+          initialStartTime={new Date(currentFast.startTime)}
+          onClose={closeUpateFast}
+          onUpdated={handleUpdateStart}
+        />
+      )}
     </Card>
   );
 }
