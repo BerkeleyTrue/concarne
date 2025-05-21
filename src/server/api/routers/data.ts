@@ -8,7 +8,7 @@ export const dataRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
       z.object({
-        weight: z.number().int().positive(),
+        weight: z.number().positive("Weight must be greater than 0"),
         date: z.date().default(() => new Date()),
       }),
     )
