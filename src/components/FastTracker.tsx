@@ -18,6 +18,7 @@ import type { Fast } from "@/server/db/schema";
 import { toast } from "sonner";
 import { useBoolean } from "@/hooks/use-boolean";
 import { UpdateStart } from "./fasting/update-start";
+import { UpdateEnd } from "./fasting/update-end";
 
 // duration in hours
 const fastTypes = [
@@ -86,6 +87,11 @@ export default function FastingTracker({
     value: isUpdatefastOpen,
     setTrue: openUpdateFast,
     setFalse: closeUpateFast,
+  } = useBoolean(false);
+  const {
+    value: isUpdateEndOpen,
+    setTrue: openUpdateEnd,
+    setFalse: closeUpdateEnd,
   } = useBoolean(false);
 
   const { mutate: createFast } = api.fast.createFast.useMutation({
@@ -219,6 +225,11 @@ export default function FastingTracker({
     closeUpateFast();
     void utils.fast.getCurrentFast.invalidate();
   }, [closeUpateFast, utils.fast.getCurrentFast]);
+
+  const handleUpdateEnd = useCallback(() => {
+    closeUpdateEnd();
+    void utils.fast.getCurrentFast.invalidate();
+  }, [closeUpdateEnd, utils.fast.getCurrentFast]);
 
   // This would normally be connected to a timer logic
   // but for demo purposes we're keeping it static
@@ -424,17 +435,24 @@ export default function FastingTracker({
           <div className="uppercase">
             {isCompleted ? "Ended fasting" : "Fast ending"}
           </div>
-          <div className="mt-1 text-[#c6d0f5]">
-            {endTime
-              ? formatDateTime(endTime.toISOString())
-              : currentFast.startTime
-                ? formatDateTime(
-                    new Date(
-                      new Date(currentFast.startTime).getTime() +
-                        currentFast.targetHours * 60 * 60 * 1000,
-                    ).toISOString(),
-                  )
-                : "Not started"}
+          <div className="mt-1 flex items-center text-[#c6d0f5]">
+            <span>
+              {endTime
+                ? formatDateTime(endTime.toISOString())
+                : currentFast.startTime
+                  ? formatDateTime(
+                      new Date(
+                        new Date(currentFast.startTime).getTime() +
+                          currentFast.targetHours * 60 * 60 * 1000,
+                      ).toISOString(),
+                    )
+                  : "Not started"}
+            </span>
+            {isCompleted && endTime && (
+              <Button variant="link" onClick={openUpdateEnd}>
+                <Edit className="ml-1 h-3 w-3" />
+              </Button>
+            )}
           </div>
         </div>
       </CardFooter>
@@ -445,6 +463,15 @@ export default function FastingTracker({
           initialStartTime={new Date(currentFast.startTime)}
           onClose={closeUpateFast}
           onUpdated={handleUpdateStart}
+        />
+      )}
+      {endTime && (
+        <UpdateEnd
+          fastId={currentFast.id ?? 0}
+          isOpen={isUpdateEndOpen}
+          initialEndTime={endTime}
+          onClose={closeUpdateEnd}
+          onUpdated={handleUpdateEnd}
         />
       )}
     </Card>
