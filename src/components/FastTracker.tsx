@@ -319,7 +319,7 @@ export default function FastingTracker({
         </CardTitle>
         <CardDescription className="flex justify-center">
           <Badge className="px-4">
-            {currentFast.fastType || `${currentFast.targetHours}-HOUR FAST`}
+            {currentFast?.fastType ?? `${currentFast?.targetHours}-HOUR FAST`}
           </Badge>
         </CardDescription>
       </CardHeader>
@@ -421,12 +421,12 @@ export default function FastingTracker({
               onClick={() => {
                 const endTime = new Date();
                 endFast.mutate({
-                  fastId: currentFast.id ?? 0,
+                  fastId: currentFast?.id ?? 0,
                   endTime: endTime.toISOString(),
                 });
                 setIsCompleted(true);
                 setEndTime(endTime);
-                setCompletedFastId(currentFast.id ?? 0);
+                setCompletedFastId(currentFast?.id ?? 0);
               }}
             >
               End Fast
@@ -438,7 +438,7 @@ export default function FastingTracker({
         <div>
           <div className="uppercase">Started fasting</div>
           <div className="mt-1 flex items-center text-[#f9e2af]">
-            <span>{formatDateTime(currentFast.startTime)}</span>
+            <span>{formatDateTime(currentFast?.startTime)}</span>
             {!isCompleted && (
               <Button variant="link" onClick={openUpdateFast}>
                 <Edit className="ml-1 h-3 w-3" />
@@ -455,7 +455,7 @@ export default function FastingTracker({
             <span>
               {endTime
                 ? formatDateTime(endTime.toISOString())
-                : currentFast.startTime
+                : currentFast?.startTime
                   ? formatDateTime(
                       new Date(
                         new Date(currentFast.startTime).getTime() +
@@ -472,7 +472,7 @@ export default function FastingTracker({
           </div>
         </div>
       </CardFooter>
-      {currentFast.startTime && (
+      {currentFast?.startTime && (
         <UpdateStart
           fastId={currentFast.id ?? 0}
           isOpen={isUpdatefastOpen}
@@ -483,7 +483,7 @@ export default function FastingTracker({
       )}
       {endTime && (
         <UpdateEnd
-          fastId={currentFast.id ?? 0}
+          fastId={currentFast?.id ?? 0}
           isOpen={isUpdateEndOpen}
           initialEndTime={endTime}
           onClose={closeUpdateEnd}
