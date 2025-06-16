@@ -81,7 +81,7 @@ export const UpdateStart = ({
               </DialogDescription>
             </DialogHeader>
 
-            <div className="mb-4 space-y-4">
+            <div className="my-4 space-y-4">
               <FormField
                 control={form.control}
                 name="startTime"
@@ -130,14 +130,16 @@ export const UpdateStart = ({
             <div className="flex justify-between space-x-2">
               <Button
                 type="button"
-                className="btn btn-secondary"
+                variant="outline"
+                className="btn"
                 onClick={onClose}
               >
                 Cancel
               </Button>
 
               <Button
-                className="btn btn-primary"
+                className="btn"
+                variant="default"
                 type="submit"
                 disabled={mutate.isPending}
               >
