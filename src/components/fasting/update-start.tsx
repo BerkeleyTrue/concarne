@@ -12,9 +12,10 @@ import { api } from "@/lib/trpc/client";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form } from "../ui/form";
+import { Form, FormControl, FormField, FormItem } from "../ui/form";
 import { useCallback } from "react";
 import { TimePicker } from "../ui/datetime";
+import { Calendar } from "../ui/calendar";
 
 const FormSchema = z.object({
   startTime: z.date(),
@@ -74,24 +75,55 @@ export const UpdateStart = ({
             className="flex w-full flex-col items-center justify-center"
           >
             <DialogHeader>
-              <DialogTitle>Update Fast Start Time</DialogTitle>
+              <DialogTitle>Update Fast Start Date & Time</DialogTitle>
               <DialogDescription>
-                Are you sure you want to update the start time of this fast?
-                This will change the start time to the current time.
+                Update the start date and time of this fast.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="mb-4 flex justify-center space-y-4">
-              <TimePicker
-                onChange={(date) =>
-                  date &&
-                  form.setValue("startTime", date, {
-                    shouldValidate: true,
-                    shouldDirty: true,
-                  })
-                }
-                date={form.getValues("startTime")}
-                granularity="minute"
+            <div className="mb-4 space-y-4">
+              <FormField
+                control={form.control}
+                name="startTime"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <div className="space-y-4">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={(date) => {
+                            if (date) {
+                              // Preserve the existing time when date changes
+                              const newDate = new Date(date);
+                              newDate.setHours(field.value?.getHours() ?? 0);
+                              newDate.setMinutes(field.value?.getMinutes() ?? 0);
+                              newDate.setSeconds(field.value?.getSeconds() ?? 0);
+                              field.onChange(newDate);
+                            }
+                          }}
+                          className="rounded-md border"
+                        />
+                        <div className="flex justify-center">
+                          <TimePicker
+                            onChange={(time) => {
+                              if (time) {
+                                // Preserve the selected date when time changes
+                                const newDate = new Date(field.value ?? new Date());
+                                newDate.setHours(time.getHours());
+                                newDate.setMinutes(time.getMinutes());
+                                newDate.setSeconds(time.getSeconds());
+                                field.onChange(newDate);
+                              }
+                            }}
+                            date={field.value}
+                            granularity="minute"
+                          />
+                        </div>
+                      </div>
+                    </FormControl>
+                  </FormItem>
+                )}
               />
             </div>
 
