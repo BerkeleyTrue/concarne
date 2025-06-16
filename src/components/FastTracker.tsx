@@ -82,7 +82,10 @@ export default function FastingTracker({
   initFast: Fast | null;
 }) {
   const utils = api.useUtils();
-  const { data: currentFast = initFast } = api.fast.getCurrentFast.useQuery();
+  const [completedFastId, setCompletedFastId] = useState<number | null>(null);
+  const { data: currentFast = initFast } = api.fast.getCurrentFast.useQuery(
+    completedFastId ? { id: completedFastId } : undefined
+  );
   const {
     value: isUpdatefastOpen,
     setTrue: openUpdateFast,
@@ -119,6 +122,7 @@ export default function FastingTracker({
   const endFast = api.fast.endFast.useMutation({
     onSuccess: () => {
       toast.success("Fast ended successfully!");
+      void utils.fast.getCurrentFast.invalidate();
     },
     onError: (error) => {
       console.error("Error ending fast:", error);
@@ -391,10 +395,12 @@ export default function FastingTracker({
           {isCompleted ? (
             <Button
               onClick={() => {
-                void utils.fast.getCurrentFast.invalidate().then(() => {
-                  setIsCompleted(false);
-                  setEndTime(null);
-                });
+                // Clear the completed state and completed fast ID
+                setIsCompleted(false);
+                setEndTime(null);
+                setCompletedFastId(null);
+                // Invalidate query to fetch fresh data (will now look for active fasts)
+                void utils.fast.getCurrentFast.invalidate();
               }}
             >
               Start New Fast
@@ -411,6 +417,7 @@ export default function FastingTracker({
                 });
                 setIsCompleted(true);
                 setEndTime(endTime);
+                setCompletedFastId(currentFast.id ?? 0);
               }}
             >
               End Fast

@@ -105,11 +105,29 @@ export const fastRouter = createTRPCRouter({
         .returning();
     }),
 
-  getCurrentFast: protectedProcedure.query(async ({ ctx }) => {
-    const res = await ctx.db.query.fasts.findFirst({
-      where: and(eq(fasts.userId, ctx.session.user.id), isNull(fasts.endTime)),
-      orderBy: [desc(fasts.startTime)],
-    });
-    return res ?? null;
-  }),
+  getCurrentFast: protectedProcedure
+    .input(
+      z.object({
+        id: z.number().int().positive().optional(),
+      }).optional()
+    )
+    .query(async ({ ctx, input }) => {
+      // If specific ID is provided, return that fast
+      if (input?.id) {
+        const res = await ctx.db.query.fasts.findFirst({
+          where: and(
+            eq(fasts.userId, ctx.session.user.id),
+            eq(fasts.id, input.id)
+          ),
+        });
+        return res ?? null;
+      }
+      
+      // Otherwise, return current active fast (no end time)
+      const res = await ctx.db.query.fasts.findFirst({
+        where: and(eq(fasts.userId, ctx.session.user.id), isNull(fasts.endTime)),
+        orderBy: [desc(fasts.startTime)],
+      });
+      return res ?? null;
+    }),
 });
