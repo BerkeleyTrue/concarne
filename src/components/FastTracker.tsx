@@ -235,9 +235,7 @@ export default function FastingTracker({
     void utils.fast.getCurrentFast.invalidate();
   }, [closeUpdateEnd, utils.fast.getCurrentFast]);
 
-  // This would normally be connected to a timer logic
-  // but for demo purposes we're keeping it static
-  if (!currentFast) {
+  if (!currentFast && !completedFastId) {
     return (
       <div className="flex flex-col items-center gap-2">
         <h1 className="text-2xl font-bold">Start a Fast</h1>
@@ -256,6 +254,17 @@ export default function FastingTracker({
           ))}
         </div>
       </div>
+    );
+  }
+
+  // Show loading state if we're waiting for completed fast data
+  if (!currentFast && completedFastId) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center p-8">
+          <div>Loading...</div>
+        </CardContent>
+      </Card>
     );
   }
 
