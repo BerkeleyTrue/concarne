@@ -71,7 +71,7 @@
 
           pnpmDeps = pnpm.fetchDeps {
             inherit (finalAttrs) pname version src;
-            hash = "sha256-lSHDFkopYm1jrEtEnfALiO1oHMfPjZ9Aw/ndk0JSVMA=";
+            hash = "sha256-USIWb6l2WNqWBkKKHH9gb1C1fI12xIMephkKufB3GOI=";
           };
           
           meta = {
