@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Development server**: `npm run dev` (uses Next.js turbo mode)
 - **Build**: `npm run build`
 - **Production preview**: `npm run preview` (builds and starts)
-- **Type checking**: `npm run tc` or `tsc --noEmit`
+- **Type checking**: `npm run tc` (runs lint first, then `tsc --noEmit`) or `tsc --noEmit`
 - **Linting**: `npm run lint` (check) or `npm run lint:fix` (auto-fix)
 - **Formatting**: `npm run format:check` or `npm run format:write`
 - **Full check**: `npm run check` (runs lint + type check)
