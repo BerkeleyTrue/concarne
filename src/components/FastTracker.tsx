@@ -230,7 +230,8 @@ export default function FastingTracker({
     void utils.fast.getCurrentFast.invalidate();
   }, [closeUpateFast, utils.fast.getCurrentFast]);
 
-  const handleUpdateEnd = useCallback(() => {
+  const handleUpdateEnd = useCallback((newEndTime: Date) => {
+    setEndTime(newEndTime);
     closeUpdateEnd();
     void utils.fast.getCurrentFast.invalidate();
   }, [closeUpdateEnd, utils.fast.getCurrentFast]);
