@@ -1,6 +1,8 @@
 "use client";
 
 import { format } from "date-fns";
+import { useRouter } from "next/navigation";
+import { useCallback } from "react";
 import { api } from "@/lib/trpc/client";
 import type { NewFast } from "@/server/db/schema";
 import {
@@ -28,13 +30,12 @@ function FastProgressBar({ targetHours, actualHours }: FastProgressBarProps) {
   );
 }
 
-interface FastsHistoryProps {
-  initFasts: NewFast[];
+interface FastTableRowProps {
+  fast: NewFast;
+  onRowClick: (fastId: number) => void;
 }
 
-export function FastsHistory({ initFasts }: FastsHistoryProps) {
-  const { data: fasts = initFasts } = api.fast.getAllFasts.useQuery();
-
+function FastTableRow({ fast, onRowClick }: FastTableRowProps) {
   const calculateDuration = (fast: NewFast) => {
     if (!fast.startTime || !fast.endTime) {
       return 0;
@@ -60,6 +61,78 @@ export function FastsHistory({ initFasts }: FastsHistoryProps) {
     if (!fast.endTime) return "Active";
     return "Completed";
   };
+
+  const handleClick = useCallback(() => {
+    onRowClick(fast.id ?? 0);
+  }, [fast.id, onRowClick]);
+
+  const actualHours = calculateDuration(fast);
+  const status = getStatus(fast);
+
+  return (
+    <tr 
+      onClick={handleClick}
+      className="border-b border-[var(--ctp-surface0)] hover:bg-[var(--ctp-surface0)] transition-colors cursor-pointer"
+    >
+      <td className="p-4">
+        <span className="font-medium text-[var(--ctp-text)]">
+          {fast.fastType}
+        </span>
+      </td>
+      <td className="p-4 text-[var(--ctp-subtext1)]">
+        {fast.targetHours}h
+      </td>
+      <td className="p-4 text-[var(--ctp-subtext1)]">
+        {status === "Completed" ? formatDuration(actualHours) : "-"}
+      </td>
+      <td className="p-4">
+        <div className="flex items-center gap-3">
+          <div className="flex-1 min-w-[120px]">
+            <FastProgressBar 
+              targetHours={fast.targetHours} 
+              actualHours={actualHours} 
+            />
+          </div>
+          <span className="text-sm text-[var(--ctp-subtext1)] min-w-[40px]">
+            {status === "Completed" ? 
+              `${Math.round((actualHours / fast.targetHours) * 100)}%` : 
+              status === "Active" ? "..." : "0%"
+            }
+          </span>
+        </div>
+      </td>
+      <td className="p-4 text-[var(--ctp-subtext1)]">
+        {formatDate(fast.startTime)}
+      </td>
+      <td className="p-4 text-[var(--ctp-subtext1)]">
+        {formatDate(fast.endTime)}
+      </td>
+      <td className="p-4">
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+          status === "Completed" 
+            ? "bg-[var(--ctp-green)] text-[var(--ctp-base)]"
+            : status === "Active"
+            ? "bg-[var(--ctp-yellow)] text-[var(--ctp-base)]"
+            : "bg-[var(--ctp-overlay0)] text-[var(--ctp-text)]"
+        }`}>
+          {status}
+        </span>
+      </td>
+    </tr>
+  );
+}
+
+interface FastsHistoryProps {
+  initFasts: NewFast[];
+}
+
+export function FastsHistory({ initFasts }: FastsHistoryProps) {
+  const router = useRouter();
+  const { data: fasts = initFasts } = api.fast.getAllFasts.useQuery();
+
+  const handleRowClick = useCallback((fastId: number) => {
+    router.push(`/fast?id=${fastId}`);
+  }, [router]);
 
   if (fasts.length === 0) {
     return (
@@ -91,62 +164,13 @@ export function FastsHistory({ initFasts }: FastsHistoryProps) {
               </tr>
             </thead>
             <tbody>
-              {fasts.map((fast) => {
-                const actualHours = calculateDuration(fast);
-                const status = getStatus(fast);
-                
-                return (
-                  <tr 
-                    key={fast.id} 
-                    className="border-b border-[var(--ctp-surface0)] hover:bg-[var(--ctp-surface0)] transition-colors"
-                  >
-                    <td className="p-4">
-                      <span className="font-medium text-[var(--ctp-text)]">
-                        {fast.fastType}
-                      </span>
-                    </td>
-                    <td className="p-4 text-[var(--ctp-subtext1)]">
-                      {fast.targetHours}h
-                    </td>
-                    <td className="p-4 text-[var(--ctp-subtext1)]">
-                      {status === "Completed" ? formatDuration(actualHours) : "-"}
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex-1 min-w-[120px]">
-                          <FastProgressBar 
-                            targetHours={fast.targetHours} 
-                            actualHours={actualHours} 
-                          />
-                        </div>
-                        <span className="text-sm text-[var(--ctp-subtext1)] min-w-[40px]">
-                          {status === "Completed" ? 
-                            `${Math.round((actualHours / fast.targetHours) * 100)}%` : 
-                            status === "Active" ? "..." : "0%"
-                          }
-                        </span>
-                      </div>
-                    </td>
-                    <td className="p-4 text-[var(--ctp-subtext1)]">
-                      {formatDate(fast.startTime)}
-                    </td>
-                    <td className="p-4 text-[var(--ctp-subtext1)]">
-                      {formatDate(fast.endTime)}
-                    </td>
-                    <td className="p-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        status === "Completed" 
-                          ? "bg-[var(--ctp-green)] text-[var(--ctp-base)]"
-                          : status === "Active"
-                          ? "bg-[var(--ctp-yellow)] text-[var(--ctp-base)]"
-                          : "bg-[var(--ctp-overlay0)] text-[var(--ctp-text)]"
-                      }`}>
-                        {status}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
+              {fasts.map((fast) => (
+                <FastTableRow 
+                  key={fast.id} 
+                  fast={fast} 
+                  onRowClick={handleRowClick}
+                />
+              ))}
             </tbody>
           </table>
         </div>
