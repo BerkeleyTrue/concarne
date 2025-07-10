@@ -132,4 +132,14 @@ export const fastRouter = createTRPCRouter({
       });
       return res ?? null;
     }),
+
+  getAllFasts: protectedProcedure
+    .query(async ({ ctx }) => {
+      const result = await ctx.db
+        .select()
+        .from(fasts)
+        .where(eq(fasts.userId, ctx.session.user.id))
+        .orderBy(desc(fasts.createdAt));
+      return result;
+    }),
 });

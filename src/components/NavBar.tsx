@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, BarChart2, Ruler, Home } from "lucide-react";
+import { Clock, BarChart2, Ruler, Home, History } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useCallback } from "react";
@@ -13,6 +13,7 @@ export const NavBar = () => {
     { label: "Home", icon: Home, route: "/" },
     { label: "Weight", icon: Ruler, route: "/weight" },
     { label: "Fasts", icon: BarChart2, route: "/fast" },
+    { label: "History", icon: History, route: "/fasts" },
     { label: "Timer", icon: Clock, route: "/timer" },
   ];
 
