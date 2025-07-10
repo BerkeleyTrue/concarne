@@ -1,7 +1,5 @@
 import { relations } from "drizzle-orm";
 import { index, sqliteTableCreator } from "drizzle-orm/sqlite-core";
-import { createInsertSchema } from "drizzle-zod";
-import type { z } from "zod";
 
 export const createTable = sqliteTableCreator((name) => `concarne_${name}`);
 
@@ -65,9 +63,8 @@ export const fasts = createTable(
   (t) => [index("fasts_userid_idx").on(t.userId)],
 );
 
-export const newFastsSelectSchema = createInsertSchema(fasts);
-// the type of the fast stored in
-export type NewFast = z.infer<typeof newFastsSelectSchema>;
+export type Fast = typeof fasts.$inferSelect;
+export type NewFast = typeof fasts.$inferInsert;
 
 export const fastsRelations = relations(fasts, ({ one }) => ({
   user: one(users, {

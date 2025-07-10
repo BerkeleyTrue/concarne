@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 import { api } from "@/lib/trpc/client";
-import type { NewFast } from "@/server/db/schema";
+import type { Fast } from "@/server/db/schema";
 import {
   Card,
   CardContent,
@@ -31,12 +31,13 @@ function FastProgressBar({ targetHours, actualHours }: FastProgressBarProps) {
 }
 
 interface FastTableRowProps {
-  fast: NewFast;
-  onRowClick: (fastId: number) => void;
+  fast: Fast;
 }
 
-function FastTableRow({ fast, onRowClick }: FastTableRowProps) {
-  const calculateDuration = (fast: NewFast) => {
+function FastTableRow({ fast }: FastTableRowProps) {
+  const router = useRouter();
+  const utils = api.useUtils();
+  const calculateDuration = (fast: Fast) => {
     if (!fast.startTime || !fast.endTime) {
       return 0;
     }
@@ -56,15 +57,21 @@ function FastTableRow({ fast, onRowClick }: FastTableRowProps) {
     return format(new Date(dateString), "MMM d, yyyy h:mm a");
   };
 
-  const getStatus = (fast: NewFast) => {
+  const getStatus = (fast: Fast) => {
     if (!fast.startTime) return "Created";
     if (!fast.endTime) return "Active";
     return "Completed";
   };
 
-  const handleClick = useCallback(() => {
-    onRowClick(fast.id ?? 0);
-  }, [fast.id, onRowClick]);
+  const handleClick = useCallback(async () => {
+    if (!fast.id) return;
+    
+    // Set the fast data in cache for getCurrentFast query
+    utils.fast.getCurrentFast.setData({ id: fast.id }, fast);
+    
+    // Navigate to the fast page
+    router.push(`/fast?id=${fast.id}`);
+  }, [fast, router, utils.fast.getCurrentFast]);
 
   const actualHours = calculateDuration(fast);
   const status = getStatus(fast);
@@ -123,16 +130,11 @@ function FastTableRow({ fast, onRowClick }: FastTableRowProps) {
 }
 
 interface FastsHistoryProps {
-  initFasts: NewFast[];
+  initFasts: Fast[];
 }
 
 export function FastsHistory({ initFasts }: FastsHistoryProps) {
-  const router = useRouter();
   const { data: fasts = initFasts } = api.fast.getAllFasts.useQuery();
-
-  const handleRowClick = useCallback((fastId: number) => {
-    router.push(`/fast?id=${fastId}`);
-  }, [router]);
 
   if (fasts.length === 0) {
     return (
@@ -168,7 +170,6 @@ export function FastsHistory({ initFasts }: FastsHistoryProps) {
                 <FastTableRow 
                   key={fast.id} 
                   fast={fast} 
-                  onRowClick={handleRowClick}
                 />
               ))}
             </tbody>

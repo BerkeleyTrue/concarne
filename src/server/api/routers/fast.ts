@@ -2,7 +2,7 @@ import { z } from "zod";
 import { and, desc, eq, isNull, isNotNull } from "drizzle-orm";
 
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import { fasts } from "@/server/db/schema";
+import { fasts, type Fast } from "@/server/db/schema";
 
 export const fastRouter = createTRPCRouter({
   createFast: protectedProcedure
@@ -113,7 +113,7 @@ export const fastRouter = createTRPCRouter({
         id: z.number().int().positive().optional(),
       }).optional()
     )
-    .query(async ({ ctx, input }) => {
+    .query(async ({ ctx, input }): Promise<Fast | null> => {
       // If specific ID is provided, return that fast
       if (input?.id) {
         const res = await ctx.db.query.fasts.findFirst({
@@ -134,7 +134,7 @@ export const fastRouter = createTRPCRouter({
     }),
 
   getAllFasts: protectedProcedure
-    .query(async ({ ctx }) => {
+    .query(async ({ ctx }): Promise<Fast[]> => {
       const result = await ctx.db
         .select()
         .from(fasts)
