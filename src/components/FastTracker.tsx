@@ -14,7 +14,7 @@ import {
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { api } from "@/lib/trpc/client";
-import type { Fast } from "@/server/db/schema";
+import type { NewFast } from "@/server/db/schema";
 import { toast } from "sonner";
 import { useBoolean } from "@/hooks/use-boolean";
 import { UpdateStart } from "./fasting/update-start";
@@ -79,7 +79,7 @@ const formatDateTime = (dateString: string | null | undefined) => {
 export default function FastingTracker({
   initFast,
 }: {
-  initFast: Fast | null;
+  initFast: NewFast | null;
 }) {
   const utils = api.useUtils();
   const [completedFastId, setCompletedFastId] = useState<number | null>(null);

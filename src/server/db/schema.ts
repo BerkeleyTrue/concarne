@@ -3,12 +3,6 @@ import { index, sqliteTableCreator } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import type { z } from "zod";
 
-/**
- * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
- * database instance for multiple projects.
- *
- * @see https://orm.drizzle.team/docs/goodies#multi-project-schema
- */
 export const createTable = sqliteTableCreator((name) => `concarne_${name}`);
 
 export const users = createTable("user", (d) => ({
@@ -71,9 +65,9 @@ export const fasts = createTable(
   (t) => [index("fasts_userid_idx").on(t.userId)],
 );
 
-export const fastsSelectSchema = createInsertSchema(fasts);
+export const newFastsSelectSchema = createInsertSchema(fasts);
 // the type of the fast stored in
-export type Fast = z.infer<typeof fastsSelectSchema>;
+export type NewFast = z.infer<typeof newFastsSelectSchema>;
 
 export const fastsRelations = relations(fasts, ({ one }) => ({
   user: one(users, {
