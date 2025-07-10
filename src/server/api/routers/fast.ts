@@ -12,11 +12,13 @@ export const fastRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      await ctx.db.insert(fasts).values({
+      const result = await ctx.db.insert(fasts).values({
         userId: ctx.session.user.id,
         targetHours: input.duration,
         fastType: "16:8 INTERMITTENT",
-      });
+      }).returning();
+      
+      return result[0];
     }),
 
   startFast: protectedProcedure
