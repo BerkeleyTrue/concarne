@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import {
   ChartContainer,
   ChartTooltip,
@@ -115,7 +115,7 @@ export function WeightChart() {
   const [autoScaleEnabled, setAutoScaleEnabled] = useState(true);
 
   // Use a debounced version to prevent excessive calculations
-  const updateVisibleYDomain = () => {
+  const updateVisibleYDomain = useCallback(() => {
     if (!containerRef.current || chartData.length === 0 || !autoScaleEnabled)
       return;
 
@@ -166,7 +166,7 @@ export function WeightChart() {
         `Y-axis auto-scaled: [${visibleMin}, ${visibleMax}] (points ${startIndex}-${endIndex})`,
       );
     }
-  };
+  }, [chartData, autoScaleEnabled, visibleYDomain]);
 
   // Determine if we need to show scroll hint (if there are more points than visible)
   useEffect(() => {
@@ -243,7 +243,7 @@ export function WeightChart() {
         clearTimeout(scrollTimeout);
       }
     };
-  }, [chartData, autoScaleEnabled]);
+  }, [chartData, autoScaleEnabled, updateVisibleYDomain]);
 
   // Chart configuration
   const chartConfig = {
