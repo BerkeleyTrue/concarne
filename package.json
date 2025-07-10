@@ -17,7 +17,9 @@
     "lint:fix": "next lint --fix",
     "preview": "next build && next start",
     "start": "next start",
-    "tc": "tsc --noEmit"
+    "pretc": "npm run lint",
+    "tc": "tsc --noEmit",
+    "typecheck": "npm run tc"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.7.2",
