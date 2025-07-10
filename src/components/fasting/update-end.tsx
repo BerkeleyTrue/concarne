@@ -35,7 +35,7 @@ export const UpdateEnd = ({
   isOpen: boolean;
   initialEndTime: Date;
   onClose: () => void;
-  onUpdated: (newEndTime: Date) => void;
+  onUpdated: () => void;
 }) => {
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(FormSchema),
@@ -47,8 +47,7 @@ export const UpdateEnd = ({
   const mutate = api.fast.updateEndTime.useMutation({
     onSuccess: () => {
       console.log("Fast end time updated successfully");
-      const newEndTime = form.getValues().endTime;
-      onUpdated(newEndTime);
+      onUpdated();
     },
     onError: (error) => {
       console.error("Error updating fast end time:", error);

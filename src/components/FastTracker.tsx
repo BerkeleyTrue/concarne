@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { Edit } from "lucide-react";
 import {
@@ -78,13 +79,15 @@ const formatDateTime = (dateString: string | null | undefined) => {
 
 export default function FastingTracker({
   initFast,
+  fastId,
 }: {
   initFast: NewFast | null;
+  fastId?: number;
 }) {
+  const router = useRouter();
   const utils = api.useUtils();
-  const [completedFastId, setCompletedFastId] = useState<number | null>(null);
   const { data: currentFast = initFast } = api.fast.getCurrentFast.useQuery(
-    completedFastId ? { id: completedFastId } : undefined
+    fastId ? { id: fastId } : undefined
   );
   const {
     value: isUpdatefastOpen,
@@ -98,9 +101,9 @@ export default function FastingTracker({
   } = useBoolean(false);
 
   const { mutate: createFast } = api.fast.createFast.useMutation({
-    onSuccess: () => {
-      // Refetch the current fast after creating
-      void utils.fast.getCurrentFast.invalidate();
+    onSuccess: (newFast) => {
+      // Navigate to the newly created fast
+      router.push(`/fast?id=${newFast?.id}`);
     },
     onError: (error) => {
       console.error("Error creating fast:", error);
@@ -130,9 +133,12 @@ export default function FastingTracker({
     },
   });
 
-  // Check if fast is completed
-  const [isCompleted, setIsCompleted] = useState(false);
-  const [endTime, setEndTime] = useState<Date | null>(null);
+  // Check if fast is completed based on database state
+  const isCompleted = !!currentFast?.endTime;
+  const endTime = useMemo(() => 
+    currentFast?.endTime ? new Date(currentFast.endTime) : null,
+    [currentFast?.endTime]
+  );
 
   const [timeState, setTimeState] = useState(() => {
     if (!currentFast?.startTime) {
@@ -230,13 +236,12 @@ export default function FastingTracker({
     void utils.fast.getCurrentFast.invalidate();
   }, [closeUpateFast, utils.fast.getCurrentFast]);
 
-  const handleUpdateEnd = useCallback((newEndTime: Date) => {
-    setEndTime(newEndTime);
+  const handleUpdateEnd = useCallback(() => {
     closeUpdateEnd();
     void utils.fast.getCurrentFast.invalidate();
   }, [closeUpdateEnd, utils.fast.getCurrentFast]);
 
-  if (!currentFast && !completedFastId) {
+  if ((!currentFast || (currentFast && isCompleted)) && !fastId) {
     return (
       <div className="flex flex-col items-center gap-2">
         <h1 className="text-2xl font-bold">Start a Fast</h1>
@@ -258,8 +263,8 @@ export default function FastingTracker({
     );
   }
 
-  // Show loading state if we're waiting for completed fast data
-  if (!currentFast && completedFastId) {
+  // Show loading state if we're waiting for specific fast data
+  if (!currentFast && fastId) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center p-8">
@@ -405,12 +410,9 @@ export default function FastingTracker({
           {isCompleted ? (
             <Button
               onClick={() => {
-                // Clear the completed state and completed fast ID
-                setIsCompleted(false);
-                setEndTime(null);
-                setCompletedFastId(null);
-                // Invalidate query to fetch fresh data (will now look for active fasts)
+                // Invalidate queries to ensure fresh data, then navigate
                 void utils.fast.getCurrentFast.invalidate();
+                router.push("/fast");
               }}
             >
               Start New Fast
@@ -425,9 +427,6 @@ export default function FastingTracker({
                   fastId: currentFast?.id ?? 0,
                   endTime: endTime.toISOString(),
                 });
-                setIsCompleted(true);
-                setEndTime(endTime);
-                setCompletedFastId(currentFast?.id ?? 0);
               }}
             >
               End Fast
