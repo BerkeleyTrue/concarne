@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNull, isNotNull } from "drizzle-orm";
 
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { fasts } from "@/server/db/schema";
@@ -138,8 +138,11 @@ export const fastRouter = createTRPCRouter({
       const result = await ctx.db
         .select()
         .from(fasts)
-        .where(eq(fasts.userId, ctx.session.user.id))
-        .orderBy(desc(fasts.createdAt));
+        .where(and(
+          eq(fasts.userId, ctx.session.user.id),
+          isNotNull(fasts.endTime)
+        ))
+        .orderBy(desc(fasts.endTime));
       return result;
     }),
 });

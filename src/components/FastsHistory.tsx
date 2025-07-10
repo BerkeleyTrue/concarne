@@ -17,7 +17,6 @@ interface FastProgressBarProps {
 
 function FastProgressBar({ targetHours, actualHours }: FastProgressBarProps) {
   const completionPercentage = Math.min((actualHours / targetHours) * 100, 100);
-  const isOverTarget = actualHours > targetHours;
   
   return (
     <div className="w-full h-6 bg-[var(--ctp-overlay0)] rounded-full overflow-hidden relative">
