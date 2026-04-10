@@ -85,5 +85,27 @@
           description = "Concarne - A personal fast and weight tracking system";
           program = "${self.packages.${system}.default}/bin/${name}";
         };
+
+        # Development shell
+        devShells.default = pkgs.mkShell {
+          buildInputs = [
+            nodejs
+            pnpm
+            pkgs.just
+          ];
+
+          shellHook = ''
+            function menu () {
+              echo
+              echo -e "\033[1;34m>==> ️  '$name' shell\n\033[0m"
+              just --list
+              echo
+              echo "(Run 'just --list' to display this menu again)"
+              echo
+            }
+
+            menu
+          '';
+        };
       });
 }
