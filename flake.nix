@@ -2,7 +2,7 @@
   description = "Concarne - A personal fasting and weight tracking system";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
@@ -71,6 +71,7 @@
 
           pnpmDeps = pnpm.fetchDeps {
             inherit (finalAttrs) pname version src;
+            fetcherVersion = 1;
             hash = "sha256-USIWb6l2WNqWBkKKHH9gb1C1fI12xIMephkKufB3GOI=";
           };
           
