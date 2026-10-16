@@ -2,7 +2,7 @@
   description = "Concarne - A personal fasting and weight tracking system";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
@@ -17,7 +17,7 @@
         nodejs = pkgs.nodejs_24;
 
         # PNPM version from packageManager field
-        pnpm = pkgs.pnpm_10;
+        pnpm = pkgs.pnpm_12;
 
         # Project name from package.json
         name = "concarne";
@@ -32,7 +32,7 @@
           nativeBuildInputs = [
             nodejs
             pnpm
-            pnpm.configHook
+            pkgs.pnpmConfigHook
           ];
 
           buildInputs = [
@@ -69,10 +69,11 @@
             runHook postInstall
           '';
 
-          pnpmDeps = pnpm.fetchDeps {
+          pnpmDeps = pkgs.fetchPnpmDeps {
             inherit (finalAttrs) pname version src;
-            fetcherVersion = 1;
-            hash = "sha256-USIWb6l2WNqWBkKKHH9gb1C1fI12xIMephkKufB3GOI=";
+            inherit pnpm;
+            fetcherVersion = 4;
+            hash = "sha256-MPilZklQ5uapIgiZAkBXHbyjLZO0CHqCKWXqGh5UsTo=";
           };
           
           meta = {
